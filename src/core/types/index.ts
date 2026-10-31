@@ -5,3 +5,5 @@ export type DeepPartial<T> = {
 export type Nullable<T> = T | null;
 
 export type AsyncFunction<T = void> = (...args: unknown[]) => Promise<T>;
+
+import './express.d';

@@ -141,3 +141,9 @@ Every `git commit` automatically triggers:
 - **Cryptographic Security**: Hashes user passwords using `bcryptjs` with standard 12 salt rounds before persisting.
 - **Multi-Tenant Isolation**: Enforces tenant boundary scoping on queries (`_id`, `tenantId`) and validates ObjectId formats.
 - **Domain Operations**: Provides `createUser`, `getUserById`, `getUserByEmail`, `getUserWithPasswordByEmail`, `updateUser`, and paginated `listUsers`.
+
+### 6. User Controller Layer (`src/modules/users/users.controller.ts`)
+
+- **Strict Transport Decoupling**: Extracts request payload (`body`, `params`, `query`, `tenantId`) and delegates directly to `usersService`.
+- **Zero Business Logic In Controllers**: Contains zero database queries or calculations; handles only HTTP marshalling and error forwarding.
+- **Standardized Responses**: Dispatches clean envelopes using `ApiResponse.success` with HTTP status codes and pagination metadata.
