@@ -169,3 +169,8 @@ Every `git commit` automatically triggers:
 - **Bearer Token Extraction**: Extracts and validates the `Authorization: Bearer <token>` header, rejecting missing or malformed tokens with standard `UnauthorizedError` (HTTP 401).
 - **Strong Request Context Injection**: Verifies token validity with `JwtUtil` and injects `req.user` (`userId`, `role`, `tenantId`) into the globally typed Express request context.
 - **Automatic Multi-Tenant Binding**: If the authenticated user's JWT payload contains a `tenantId`, it automatically binds `req.tenantId` and sets the `x-tenant-id` response header, relieving frontend clients from manually injecting tenant headers on authenticated requests.
+
+### 10. Role-Based Access Control (RBAC) Guard (`src/shared/middleware/rbac.middleware.ts`)
+
+- **Declarative Route Protection**: Higher-order middleware `authorize(...allowedRoles)` guarding endpoints based on authenticated caller roles (e.g. `authorize(USER_ROLES.ADMIN)`).
+- **Access Enforcement**: Rejects unauthenticated callers with HTTP 401 `UnauthorizedError` and unauthorized roles with HTTP 403 `ForbiddenError`.
