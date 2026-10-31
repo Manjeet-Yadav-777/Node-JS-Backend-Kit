@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 
 ## Project Name: Production-Grade Reusable Backend Boilerplate
-**Version:** 1.0.0  
+**Version:** 1.1.0  
 **Target Root Directory:** `/Users/manjeetyadav/Desktop/Backend`  
 **Status:** Approved for Execution  
 
@@ -10,12 +10,13 @@
 ## 1. Project Overview and Objectives
 
 ### 1.1 Problem Statement
-Writing backend infrastructure from scratch for every new project is inefficient, error-prone, and leads to inconsistent implementations of authentication, database access, validation, and error handling. This inconsistency slows down development velocity and complicates maintenance as applications scale.
+Writing backend infrastructure from scratch for every new project is inefficient, error-prone, and leads to inconsistent implementations of authentication, database access, validation, testing, and error handling. This inconsistency slows down development velocity and complicates maintenance as applications scale.
 
 ### 1.2 Objective
 Develop a production-grade, modular, scalable, and reusable backend boilerplate that:
 - Covers the core 80% of functionality common to most modern web applications (e.g., SaaS, E-commerce, On-demand platforms).
 - Adheres strictly to a layered architecture with separation of concerns.
+- Enforces strict automated quality checks (type checking, linting, formatting, tests) at git commit time.
 - Runs natively on a local Node.js/TypeScript environment during development without requiring initial complex infrastructure.
 - Integrates Docker and production containerization seamlessly at the final stage without modifying business logic.
 
@@ -34,7 +35,10 @@ Develop a production-grade, modular, scalable, and reusable backend boilerplate 
 | **Background Queue** | BullMQ (Redis-backed) | High-performance asynchronous job processing |
 | **Authentication** | JWT (Access + Refresh) + Argon2/Bcrypt | Industry-standard token rotation and secure password hashing |
 | **Logging** | Pino + Pino-Pretty | High-throughput structured JSON logging with low overhead |
-| **Security** | Helmet, CORS, Express-Rate-Limit | Basic defense against common web vulnerabilities (XSS, DDoS, brute force) |
+| **Linting & Formatting**| ESLint (typescript-eslint) + Prettier | Enforces strict code standards, zero `any` policy, clean style |
+| **Testing** | Vitest + Supertest | Blazing fast TypeScript-native test runner with HTTP integration tests |
+| **Git Hooks & Quality** | Husky + lint-staged | Enforces typecheck, linting, and formatting automatically on commit |
+| **Security** | Helmet, CORS, Express-Rate-Limit | Defense against common web vulnerabilities (XSS, DDoS, brute force) |
 | **Containerization** | Docker & Docker Compose *(Final Phase)* | Standardized container builds and 1-click local service setups |
 
 ---
@@ -78,13 +82,24 @@ graph TD
 - Standard response formatter (`ApiResponse.success`, `ApiResponse.error`).
 - Centralized global error handling middleware with custom error classes (`BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `NotFoundError`, `ConflictError`, `InternalServerError`).
 
-### Module 2: Database and Migrations
+### Module 2: Code Quality, Testing, and Git Hooks
+- ESLint configuration enforcing clean imports, unused variable detection, and zero `any` tolerance.
+- Prettier configuration for unified code style (`.prettierrc`, `.prettierignore`).
+- Vitest test setup for fast unit and service testing.
+- Supertest setup for end-to-end API testing.
+- Husky + lint-staged pre-commit pipeline:
+  - Triggers `typecheck` (`tsc --noEmit`) to verify entire project types before any commit.
+  - Triggers `eslint --fix` on staged files.
+  - Triggers `prettier --write` on staged files.
+  - Blocks commits automatically if any type or lint error exists.
+
+### Module 3: Database and Migrations
 - PostgreSQL connection initialization and lifecycle management via Prisma ORM.
 - Connection health check probe.
 - Database migration workflows (`npm run db:migrate`).
 - Database seed pipeline for initialization and default role setup.
 
-### Module 3: Authentication and Authorization
+### Module 4: Authentication and Authorization
 - User registration with password hashing (Argon2 / Bcrypt).
 - Authentication via short-lived Access Tokens (15 min) and long-lived Refresh Tokens (7 days).
 - Secure token storage using HttpOnly cookies.
@@ -92,7 +107,7 @@ graph TD
 - Role-Based Access Control (RBAC) middleware (`requireRole(['admin', 'user'])`).
 - Rate limiting middleware on sensitive endpoints to protect against brute-force attacks.
 
-### Module 4: Caching Layer (Redis)
+### Module 5: Caching Layer (Redis)
 - Redis connection wrapper with automatic reconnection and graceful failure handling.
 - Generic cache utility:
   - `cache.get(key)`
@@ -100,23 +115,23 @@ graph TD
   - `cache.del(key)`
   - `cache.remember(key, ttlInSeconds, fetchCallback)` (Cache-Aside Pattern).
 
-### Module 5: Asynchronous Background Job System (BullMQ)
+### Module 6: Asynchronous Background Job System (BullMQ)
 - BullMQ worker and queue abstraction over Redis.
 - Generic producer and consumer pipeline.
 - Example notification worker (simulated email and OTP dispatch).
 - Configurable retry strategies with exponential backoff.
 
-### Module 6: Storage Abstraction
+### Module 7: Storage Abstraction
 - File upload handling using Multer.
 - Storage adapter interface:
   - `LocalStorageAdapter` for local development.
   - `S3StorageAdapter` / Cloud storage adapter, switchable via environment configuration.
 
-### Module 7: Observability and Health Management
+### Module 8: Observability and Health Management
 - Health check route (`/healthz`) reporting process status, database connectivity, and cache availability.
 - Graceful shutdown handling for `SIGTERM` and `SIGINT` to drain active requests and disconnect pools safely.
 
-### Module 8: Containerization (Final Step)
+### Module 9: Containerization (Final Step)
 - Multi-stage production `Dockerfile` for lean deployment.
 - `docker-compose.yml` for unified local execution (Application, PostgreSQL, Redis).
 - Complete `.dockerignore` file.
@@ -128,17 +143,18 @@ graph TD
 ```mermaid
 timeline
     title Project Roadmap
-    Phase 1 : Workspace Setup : TypeScript Configuration : Environment Validation : Logger and Errors
+    Phase 1 : Workspace Setup : TypeScript Configuration : ESLint & Prettier : Husky Pre-Commit : Environment Validation : Logger and Errors
     Phase 2 : Database Integration : Prisma Schema : Migrations : Base Repositories
     Phase 3 : Authentication and RBAC : JWT Implementation : Auth Endpoints : Role Guards
     Phase 4 : Caching and Queues : Redis Setup : Cache Manager : BullMQ Job Worker
-    Phase 5 : Storage and Hardening : File Upload Adapter : Rate Limiting : Health Checks
+    Phase 5 : Testing and Storage : Unit & Integration Tests : File Upload Adapter : Health Checks
     Phase 6 : Containerization : Dockerfile : Docker Compose : Documentation
 ```
 
-### Phase 1: Foundation
+### Phase 1: Foundation and Quality Gates
 - Initialize `package.json`, TypeScript, and core dependencies.
-- Build folder structure (`src/config`, `src/common`, `src/modules`).
+- Setup ESLint, Prettier, Husky, and lint-staged (pre-commit quality gates).
+- Build folder structure (`src/config`, `src/common`, `src/modules`, `src/services`).
 - Implement environment validation, logger, custom error classes, and server bootstrap.
 
 ### Phase 2: Database Integration
@@ -156,8 +172,9 @@ timeline
 - Implement generic caching helper.
 - Setup BullMQ worker and test background queue execution.
 
-### Phase 5: Storage and Resilience
+### Phase 5: Testing, Storage, and Resilience
 - Build pluggable file upload service (Local and Cloud adapters).
+- Write Vitest unit and integration test suite.
 - Add security headers (Helmet), CORS, and rate limiters.
 - Add health check probes and graceful shutdown hooks.
 
@@ -172,8 +189,10 @@ timeline
 
 The boilerplate is considered complete when:
 1. The project builds with zero TypeScript errors under strict mode.
-2. The application validates environment variables and aborts immediately on missing configuration.
-3. Every endpoint returns predictable, structured response payloads.
-4. Authentication supports secure token rotation with HttpOnly cookies.
-5. Heavy tasks execute asynchronously via BullMQ without blocking the main event loop.
-6. The entire stack can be launched via standard local commands and finalized with `docker compose up`.
+2. Every git commit automatically triggers and passes type-checking (`tsc --noEmit`), linting (`eslint`), and formatting (`prettier`).
+3. The application validates environment variables and aborts immediately on missing configuration.
+4. Every endpoint returns predictable, structured response payloads.
+5. Authentication supports secure token rotation with HttpOnly cookies.
+6. Heavy tasks execute asynchronously via BullMQ without blocking the main event loop.
+7. Unit and integration test suites run cleanly with passing assertions.
+8. The entire stack can be launched via standard local commands and finalized with `docker compose up`.
