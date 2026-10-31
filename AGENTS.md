@@ -3,7 +3,10 @@
 ## 1. Operating and Agent Behavioral Constraints
 
 1. **Rule Precedence:** Review and strictly follow all rules defined in this file before executing any task or writing code.
-2. **Step-by-Step Execution:** Do not build everything at once. Build modularly, phase by phase, allowing the user to review, test, and understand each component before moving to the next.
+2. **Strict Single-Task / Micro-Step Execution:**
+   - Never build multiple components, modules, or layers in a single turn.
+   - Execute strictly ONE single micro-step at a time (e.g. one file or one isolated utility).
+   - After completing that single micro-step, stop immediately, explain what it does and why, and wait for user review before proceeding.
 3. **Living README Documentation:** Continuously update `README.md` with every newly implemented system, including usage guides, code snippets, and environment variable requirements.
 4. **Concise Communication:** Keep conversational explanations clear, relatable, and concise. Avoid unnecessary conversational bloat.
 5. **No Unnecessary Complexity:** Keep implementations clean, simple, and pragmatic. Avoid premature abstractions and over-engineering.
