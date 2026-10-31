@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 import { USER_ROLES, UserRole } from '../../core';
 
 export interface IUser extends Document {
@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   role: UserRole;
+  tenantId?: Types.ObjectId | null;
   isEmailVerified: boolean;
   refreshToken?: string;
   createdAt: Date;
@@ -38,6 +39,12 @@ const userSchema = new Schema<IUser>(
       enum: Object.values(USER_ROLES),
       default: USER_ROLES.USER,
       index: true,
+    },
+    tenantId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Tenant',
+      index: true,
+      default: null,
     },
     isEmailVerified: {
       type: Boolean,

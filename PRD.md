@@ -20,7 +20,8 @@ Build an enterprise-grade, modular, scalable, and reusable backend starter kit f
 2. **Provider Adapter Pattern:** Infrastructure dependencies (email, SMS, file storage, payment gateways) abstracted behind interfaces so providers can be swapped via configuration without altering business logic.
 3. **Optional & Resilient Infrastructure:** Core features run reliably even if optional services (e.g. Kafka or Redis) are temporarily unreachable.
 4. **No Unnecessary Abstraction:** Pragmatic layering; avoid pass-through wrappers. Use repositories only where complex queries demand them.
-5. **Production Readiness from Day 1:** Security, structured logging, centralized error handling, graceful shutdown, and automated testing are baked in from the ground up.
+5. **SaaS Multi-Tenancy by Design:** Built-in multi-tenant data isolation architecture (Tenant Context, Tenant ID partitioning, and cross-tenant leakage prevention) capable of powering B2B SaaS platforms.
+6. **Production Readiness from Day 1:** Security, structured logging, centralized error handling, graceful shutdown, and automated testing are baked in from the ground up.
 
 ---
 
