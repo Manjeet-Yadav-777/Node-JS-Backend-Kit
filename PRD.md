@@ -159,7 +159,7 @@ graph TD
 timeline
     title Project Roadmap
     Phase 1 : Workspace Setup : TypeScript Configuration : ESLint & Prettier : Husky Pre-Commit : Environment Validation : Logger and Errors
-    Phase 2 : Database Integration : Mongoose Schema : Indexing : Base Repositories
+    Phase 2 : Database Integration : Mongoose Schema : Indexing : Models
     Phase 3 : Authentication and RBAC : JWT Implementation : Auth Endpoints : Role Guards
     Phase 4 : Caching and Queues : Redis Setup : Cache Manager : BullMQ Job Worker
     Phase 5 : Testing and Storage : Unit & Integration Tests : File Upload Adapter : Health Checks

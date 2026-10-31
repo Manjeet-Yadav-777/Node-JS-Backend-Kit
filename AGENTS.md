@@ -23,10 +23,10 @@
 
 ---
 
-## 2. Architectural Rules (The 4-Layer Rule)
+## 2. Architectural Rules (The Layered Pattern)
 
-All application code must flow unidirectionally:
-`Route -> Middleware -> Controller -> Service -> Repository/Database`
+All application code flows unidirectionally:
+`Route -> Middleware -> Controller -> Service -> Database (Mongoose Models)`
 
 1. **Routes Layer (`*.routes.ts`):**
    - Define only URL endpoints, HTTP methods, and attached middlewares (auth, validation).
@@ -40,12 +40,12 @@ All application code must flow unidirectionally:
    - Never perform business calculations inside controllers.
 
 3. **Service Layer (`*.service.ts`):**
-   - Houses all business logic, data transformation, calculations, and orchestration.
+   - Houses all business logic, data transformation, calculations, and database queries via Mongoose Models.
    - Never pass Express `req` or `res` objects into service methods.
    - Service methods must accept pure data parameters (e.g., `userId: string`, `dto: CreateUserDto`) and return pure data or throw custom error instances.
 
-4. **Repository / Database Layer (`*.repository.ts` / Mongoose Models):**
-   - Executes database operations, data persistence, and query building.
+4. **Model Layer (`*.model.ts`):**
+   - Defines Mongoose schemas, types, validation rules, and indexes.
 
 ---
 
