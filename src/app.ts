@@ -4,7 +4,7 @@ import cors from 'cors';
 import { appConfig } from './config';
 import { NotFoundError, ApiResponse } from './core';
 import { requestIdMiddleware, tenantMiddleware, errorMiddleware } from './shared';
-import { healthRoutes } from './modules';
+import { healthRoutes, userRoutes } from './modules';
 
 export function createApp(): Application {
   const app: Application = express();
@@ -38,6 +38,8 @@ export function createApp(): Application {
       'Backend Starter Kit API is operational',
     );
   });
+
+  apiRouter.use('/users', userRoutes);
 
   app.use(appConfig.apiPrefix, apiRouter);
 

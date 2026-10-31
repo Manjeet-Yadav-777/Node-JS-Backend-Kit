@@ -97,8 +97,9 @@ Every `git commit` automatically triggers:
 ## Current Roadmap Status
 
 - [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates
-- [x] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation _(In Progress)_
+- [x] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation
 - [ ] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security
+
 - [ ] **Phase 4:** Redis Caching, Distributed Locks, Rate Limiting
 - [ ] **Phase 5:** BullMQ Background Jobs & Workers
 - [ ] **Phase 6:** Email, Notifications, Storage (S3 / Local), PDF Generation
@@ -147,3 +148,12 @@ Every `git commit` automatically triggers:
 - **Strict Transport Decoupling**: Extracts request payload (`body`, `params`, `query`, `tenantId`) and delegates directly to `usersService`.
 - **Zero Business Logic In Controllers**: Contains zero database queries or calculations; handles only HTTP marshalling and error forwarding.
 - **Standardized Responses**: Dispatches clean envelopes using `ApiResponse.success` with HTTP status codes and pagination metadata.
+
+### 7. User Routes Layer (`src/modules/users/users.routes.ts`)
+
+- **Declarative Route Mapping**: Binds endpoints under `/api/v1/users` cleanly without business logic.
+- **Pre-Controller Validation Guards**:
+  - `POST /api/v1/users`: Validated with `registerUserSchema` -> `UsersController.createUser` (HTTP 201).
+  - `GET /api/v1/users`: Validated with `queryUsersSchema` -> `UsersController.listUsers` (HTTP 200).
+  - `GET /api/v1/users/:id`: -> `UsersController.getUserById` (HTTP 200).
+  - `PATCH /api/v1/users/:id`: Validated with `updateUserSchema` -> `UsersController.updateUser` (HTTP 200).
