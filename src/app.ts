@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import { appConfig } from './config';
 import { NotFoundError, ApiResponse } from './core';
 import { requestIdMiddleware, tenantMiddleware, errorMiddleware } from './shared';
-import { healthRoutes, userRoutes } from './modules';
+import { healthRoutes, userRoutes, authRoutes } from './modules';
 
 export function createApp(): Application {
   const app: Application = express();
@@ -41,6 +41,7 @@ export function createApp(): Application {
     );
   });
 
+  apiRouter.use('/auth', authRoutes);
   apiRouter.use('/users', userRoutes);
 
   app.use(appConfig.apiPrefix, apiRouter);

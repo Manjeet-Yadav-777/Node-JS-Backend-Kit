@@ -98,7 +98,7 @@ Every `git commit` automatically triggers:
 
 - [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates
 - [x] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation
-- [x] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security _(In Progress)_
+- [x] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security
 - [ ] **Phase 4:** Redis Caching, Distributed Locks, Rate Limiting
 
 - [ ] **Phase 5:** BullMQ Background Jobs & Workers
@@ -192,3 +192,12 @@ Every `git commit` automatically triggers:
   - `refreshToken`: Reads from cookie or body, executes cryptographic rotation, updates cookies.
   - `logout`: Unsets DB session and clears browser cookies.
   - `getMe`: Resolves authenticated profile for the current session.
+
+### 13. Authentication Routes (`src/modules/auth/auth.routes.ts`)
+
+- **Unified Auth Gateway**: Mounted at `/api/v1/auth` with strict validation and security guards:
+  - `POST /api/v1/auth/register`: Validated with `registerUserSchema` -> `AuthController.register`.
+  - `POST /api/v1/auth/login`: Validated with `loginUserSchema` -> `AuthController.login`.
+  - `POST /api/v1/auth/refresh`: Reads cookie or payload -> `AuthController.refreshToken`.
+  - `POST /api/v1/auth/logout`: Clears session cookies -> `AuthController.logout`.
+  - `GET /api/v1/auth/me`: Protected by `authenticate` guard -> `AuthController.getMe`.
