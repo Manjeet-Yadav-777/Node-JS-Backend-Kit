@@ -32,7 +32,7 @@ All application code must flow unidirectionally:
    - Handles HTTP transport only.
    - Extracts data from `req.body`, `req.params`, and `req.query`, and delegates execution to the corresponding Service method.
    - Dispatches standardized responses using `ApiResponse.success(res, ...)`.
-   - Never write database queries (Prisma/SQL) inside controllers.
+   - Never write database queries (Mongoose/MongoDB) inside controllers.
    - Never perform business calculations inside controllers.
 
 3. **Service Layer (`*.service.ts`):**
@@ -40,7 +40,7 @@ All application code must flow unidirectionally:
    - Never pass Express `req` or `res` objects into service methods.
    - Service methods must accept pure data parameters (e.g., `userId: string`, `dto: CreateUserDto`) and return pure data or throw custom error instances.
 
-4. **Repository / Database Layer (`*.repository.ts` / Prisma):**
+4. **Repository / Database Layer (`*.repository.ts` / Mongoose Models):**
    - Executes database operations, data persistence, and query building.
 
 ---

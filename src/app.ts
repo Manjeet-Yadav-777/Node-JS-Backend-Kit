@@ -2,6 +2,7 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { env } from './config/env';
+import { isDatabaseConnected } from './config/database';
 import { requestIdMiddleware } from './common/middlewares/request-id.middleware';
 import { errorMiddleware } from './common/middlewares/error.middleware';
 import { NotFoundError } from './common/errors/app-error';
@@ -31,6 +32,7 @@ export function createApp(): Application {
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         environment: env.NODE_ENV,
+        database: isDatabaseConnected() ? 'connected' : 'disconnected',
       },
       'Service is operational',
     );

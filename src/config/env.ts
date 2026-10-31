@@ -9,7 +9,7 @@ const envSchema = z.object({
   API_PREFIX: z.string().default('/api/v1'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
 
-  DATABASE_URL: z.string().optional(),
+  MONGODB_URI: z.string().default('mongodb://localhost:27017/main_db'),
   REDIS_URL: z.string().optional(),
 
   JWT_ACCESS_SECRET: z

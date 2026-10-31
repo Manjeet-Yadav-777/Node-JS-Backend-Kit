@@ -34,7 +34,7 @@ Develop a production-grade, modular, scalable, and reusable backend boilerplate 
 | **Language**             | TypeScript (Strict Mode)                | Static typing, early bug prevention, rich IDE support                  |
 | **Framework**            | Express.js (with TS)                    | Battle-tested, extensible, compatible with clean architecture          |
 | **Validation**           | Zod                                     | Runtime schema validation with compile-time type inference             |
-| **Database & ORM**       | PostgreSQL + Prisma ORM                 | Relational consistency, type-safe queries, automated migrations        |
+| **Database & ODM**       | MongoDB + Mongoose                      | High-performance document store with type-safe schema modeling         |
 | **Caching Layer**        | Redis (ioredis)                         | High-speed in-memory store for session caching and rate limits         |
 | **Background Queue**     | BullMQ (Redis-backed)                   | High-performance asynchronous job processing                           |
 | **Authentication**       | JWT (Access + Refresh) + Argon2/Bcrypt  | Industry-standard token rotation and secure password hashing           |
@@ -60,7 +60,7 @@ graph TD
     Middleware --> Controller[3. Controller - HTTP Transport]
     Controller --> Service[4. Service - Business Logic]
     Service --> Cache[5. Cache Layer - Redis]
-    Service --> Repo[6. Database - Prisma ORM]
+    Service --> Repo[6. Database - MongoDB / Mongoose]
     Service --> Queue[7. Background Queue - BullMQ]
 ```
 
@@ -68,7 +68,7 @@ graph TD
 2. **Middleware Layer:** Handles authentication, rate limiting, request tracing, and payload validation (Zod).
 3. **Controller Layer:** Parses HTTP inputs, delegates to services, and returns standardized responses. Direct database operations are prohibited.
 4. **Service Layer:** Encapsulates business logic, data mutations, and third-party integrations. Operates independently of Express `req` and `res` objects.
-5. **Data Layer:** Handles schema definitions, queries, and transactions through Prisma ORM and Redis.
+5. **Data Layer:** Handles schema definitions, indexing, and queries through Mongoose ODM and Redis.
 
 ### 3.2 Core Architectural Invariants
 
@@ -101,12 +101,12 @@ graph TD
   - Triggers `prettier --write` on staged files.
   - Blocks commits automatically if any type or lint error exists.
 
-### Module 3: Database and Migrations
+### Module 3: Database and Data Modeling
 
-- PostgreSQL connection initialization and lifecycle management via Prisma ORM.
-- Connection health check probe.
-- Database migration workflows (`npm run db:migrate`).
-- Database seed pipeline for initialization and default role setup.
+- MongoDB connection initialization and lifecycle management via Mongoose.
+- Connection health check probe and connection pool management.
+- Schema definitions with strict typing, indexes, and timestamps.
+- Seed pipeline for initialization and default role setup.
 
 ### Module 4: Authentication and Authorization
 
@@ -148,7 +148,7 @@ graph TD
 ### Module 9: Containerization (Final Step)
 
 - Multi-stage production `Dockerfile` for lean deployment.
-- `docker-compose.yml` for unified local execution (Application, PostgreSQL, Redis).
+- `docker-compose.yml` for unified local execution (Application, MongoDB, Redis).
 - Complete `.dockerignore` file.
 
 ---
@@ -159,7 +159,7 @@ graph TD
 timeline
     title Project Roadmap
     Phase 1 : Workspace Setup : TypeScript Configuration : ESLint & Prettier : Husky Pre-Commit : Environment Validation : Logger and Errors
-    Phase 2 : Database Integration : Prisma Schema : Migrations : Base Repositories
+    Phase 2 : Database Integration : Mongoose Schema : Indexing : Base Repositories
     Phase 3 : Authentication and RBAC : JWT Implementation : Auth Endpoints : Role Guards
     Phase 4 : Caching and Queues : Redis Setup : Cache Manager : BullMQ Job Worker
     Phase 5 : Testing and Storage : Unit & Integration Tests : File Upload Adapter : Health Checks
@@ -175,9 +175,9 @@ timeline
 
 ### Phase 2: Database Integration
 
-- Configure Prisma with PostgreSQL.
-- Define initial User and Session schemas.
-- Execute migrations and verify database connectivity.
+- Configure Mongoose connection with retry logic and pooling.
+- Define initial User and Session Mongoose schemas.
+- Verify database connectivity and indexes.
 
 ### Phase 3: Authentication and Security
 
