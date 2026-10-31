@@ -122,3 +122,9 @@ Every `git commit` automatically triggers:
 - **Automatic Extraction**: Automatically inspects every incoming HTTP request for the `x-tenant-id` header (or downstream auth token / subdomain) and securely binds it to `req.tenantId`.
 - **Response Reflection**: Attaches `x-tenant-id` to the response headers for end-to-end trace correlation and client-side workspace confirmation.
 - **Type-Safe**: Extends Express `Request` interface globally so `req.tenantId` is strictly typed (`string | null`) throughout all controllers, services, and middlewares without unsafe type assertions.
+
+### 3. Generic Validation Middleware (`src/shared/middleware/validation.middleware.ts`)
+
+- **Zero-Boilerplate Schema Validation**: Higher-order middleware accepting Zod schemas for `body`, `query`, and `params`.
+- **Safe Type Coercion & Stripping**: Safely parses and strips unknown properties, coercing query types before reaching controllers.
+- **Standardized Error Formatting**: Catches `ZodError` and transforms issues into standard `ApiResponse.error` with HTTP 400 and `VALIDATION_ERROR` code.
