@@ -2,15 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import { JwtUtil, UnauthorizedError } from '../../core';
 
 export function authenticate(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new UnauthorizedError('Authentication token is missing or malformed');
+  const cookieToken = (req.cookies as Record<string, string> | undefined)?.accessToken;
+  if (typeof cookieToken === 'string' && cookieToken.trim().length > 0) {
+    token = cookieToken.trim();
+  } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1]?.trim();
   }
 
-  const token = authHeader.split(' ')[1];
-  if (!token || token.trim().length === 0) {
-    throw new UnauthorizedError('Authentication token is missing');
+  if (!token) {
+    throw new UnauthorizedError('Authentication token is missing or malformed');
   }
 
   const decoded = JwtUtil.verifyAccessToken(token);

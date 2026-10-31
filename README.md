@@ -174,3 +174,21 @@ Every `git commit` automatically triggers:
 
 - **Declarative Route Protection**: Higher-order middleware `authorize(...allowedRoles)` guarding endpoints based on authenticated caller roles (e.g. `authorize(USER_ROLES.ADMIN)`).
 - **Access Enforcement**: Rejects unauthenticated callers with HTTP 401 `UnauthorizedError` and unauthorized roles with HTTP 403 `ForbiddenError`.
+
+### 11. Authentication Domain Service (`src/modules/auth/auth.service.ts`)
+
+- **User Registration & Token Issuance**: Delegates account creation to `usersService`, hashes generated refresh token, and saves hash to MongoDB.
+- **Timing-Safe Login Verification**: Employs constant-time `bcryptjs` password comparison, avoiding user enumeration vectors.
+- **Cryptographic Token Rotation**: Rotates both Access & Refresh tokens on each refresh call, automatically revoking compromised sessions if token reuse is detected.
+- **Secure Logout**: Invalidates server-side refresh tokens by unsetting stored hash.
+
+### 12. Authentication Controller & httpOnly Cookie Strategy (`src/modules/auth/auth.controller.ts`)
+
+- **XSS-Resistant Cookie Management**: Issues `accessToken` and `refreshToken` in `httpOnly, secure, sameSite` cookies, completely isolating tokens from client-side JavaScript access.
+- **Dual Client Transport**: Returns tokens in JSON body for mobile apps/Postman while setting cookies for web browsers.
+- **Endpoint Operations**:
+  - `register`: Creates account, sets session cookies, returns HTTP 201.
+  - `login`: Validates credentials, sets session cookies, returns HTTP 200.
+  - `refreshToken`: Reads from cookie or body, executes cryptographic rotation, updates cookies.
+  - `logout`: Unsets DB session and clears browser cookies.
+  - `getMe`: Resolves authenticated profile for the current session.

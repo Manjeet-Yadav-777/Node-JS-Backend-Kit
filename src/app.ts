@@ -1,6 +1,7 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { appConfig } from './config';
 import { NotFoundError, ApiResponse } from './core';
 import { requestIdMiddleware, tenantMiddleware, errorMiddleware } from './shared';
@@ -17,6 +18,7 @@ export function createApp(): Application {
       credentials: true,
     }),
   );
+  app.use(cookieParser());
   app.use(requestIdMiddleware);
   app.use(tenantMiddleware);
   app.use(express.json({ limit: '10mb' }));

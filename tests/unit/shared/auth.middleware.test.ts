@@ -53,4 +53,24 @@ describe('Auth Middleware (authenticate)', () => {
     expect(setHeaderMock).toHaveBeenCalledWith('x-tenant-id', 'tenant_org_789');
     expect(mockNext).toHaveBeenCalled();
   });
+
+  it('should verify token when passed via cookies.accessToken', () => {
+    const validToken = JwtUtil.generateAccessToken({
+      userId: 'cookie_user_123',
+      role: 'user',
+      tenantId: 'cookie_tenant_456',
+    });
+
+    mockRequest = {
+      headers: {},
+      cookies: { accessToken: validToken },
+    } as unknown as Request;
+
+    authenticate(mockRequest, mockResponse, mockNext);
+
+    expect(mockRequest.user).toBeDefined();
+    expect(mockRequest.user?.userId).toBe('cookie_user_123');
+    expect(mockRequest.tenantId).toBe('cookie_tenant_456');
+    expect(mockNext).toHaveBeenCalled();
+  });
 });
