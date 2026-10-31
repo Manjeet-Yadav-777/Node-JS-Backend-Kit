@@ -29,4 +29,11 @@ describe('App Foundation and Health Checks', () => {
     expect(response.body.success).toBe(false);
     expect(response.body.error.code).toBe('NOT_FOUND');
   });
+
+  it('GET /api/v1 should capture and reflect x-tenant-id header when provided', async () => {
+    const response = await request(app).get('/api/v1').set('x-tenant-id', 'org_swiggy_123');
+
+    expect(response.status).toBe(200);
+    expect(response.headers['x-tenant-id']).toBe('org_swiggy_123');
+  });
 });

@@ -116,3 +116,9 @@ Every `git commit` automatically triggers:
 - **Fields**: `name`, `email` (unique, lowercase, indexed), `password` (`select: false`), `role` (`user` / `admin`), `tenantId` (optional indexed ObjectId for SaaS multi-tenancy), `isEmailVerified`, `refreshToken` (`select: false`), timestamps.
 - **Security Invariant**: Sensitive fields (`password`, `refreshToken`) have `select: false` set at the schema level to prevent accidental data leaks in API responses.
 - **SaaS Multi-Tenancy Ready**: The optional indexed `tenantId` enables strict workspace/company data partitioning for B2B SaaS without affecting single-tenant B2C usage.
+
+### 2. Multi-Tenant Request Middleware (`src/shared/middleware/tenant.middleware.ts`)
+
+- **Automatic Extraction**: Automatically inspects every incoming HTTP request for the `x-tenant-id` header (or downstream auth token / subdomain) and securely binds it to `req.tenantId`.
+- **Response Reflection**: Attaches `x-tenant-id` to the response headers for end-to-end trace correlation and client-side workspace confirmation.
+- **Type-Safe**: Extends Express `Request` interface globally so `req.tenantId` is strictly typed (`string | null`) throughout all controllers, services, and middlewares without unsafe type assertions.

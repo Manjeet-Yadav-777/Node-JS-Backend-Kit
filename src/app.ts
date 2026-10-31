@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import { appConfig } from './config';
 import { NotFoundError, ApiResponse } from './core';
-import { requestIdMiddleware, errorMiddleware } from './shared';
+import { requestIdMiddleware, tenantMiddleware, errorMiddleware } from './shared';
 import { healthRoutes } from './modules';
 
 export function createApp(): Application {
@@ -18,6 +18,7 @@ export function createApp(): Application {
     }),
   );
   app.use(requestIdMiddleware);
+  app.use(tenantMiddleware);
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
