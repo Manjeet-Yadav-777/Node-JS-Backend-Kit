@@ -96,8 +96,8 @@ Every `git commit` automatically triggers:
 
 ## Current Roadmap Status
 
-- [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates _(In Progress)_
-- [ ] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation
+- [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates
+- [x] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation _(In Progress)_
 - [ ] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security
 - [ ] **Phase 4:** Redis Caching, Distributed Locks, Rate Limiting
 - [ ] **Phase 5:** BullMQ Background Jobs & Workers
@@ -106,3 +106,12 @@ Every `git commit` automatically triggers:
 - [ ] **Phase 8:** Structured Observability, Prometheus Metrics, Full Testing
 - [ ] **Phase 9:** Dockerization, CI/CD, OpenAPI / Swagger Docs
 - [ ] **Phase 10:** Multi-Tenancy, Reliability Patterns, Final Developer Kit
+
+---
+
+## Implemented Modules
+
+### 1. User Model (`src/modules/users/users.model.ts`)
+
+- **Fields**: `name`, `email` (unique, lowercase, indexed), `password` (`select: false`), `role` (`user` / `admin`), `isEmailVerified`, `refreshToken` (`select: false`), timestamps.
+- **Security Invariant**: Sensitive fields (`password`, `refreshToken`) have `select: false` set at the schema level to prevent accidental data leaks in API responses.
