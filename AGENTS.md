@@ -53,7 +53,7 @@ All application code must flow unidirectionally:
   ```ts
   export const createUserSchema = z.object({
     email: z.string().email(),
-    password: z.string().min(8)
+    password: z.string().min(8),
   });
   export type CreateUserDto = z.infer<typeof createUserSchema>;
   ```
@@ -120,9 +120,9 @@ All application code must flow unidirectionally:
 
 ## 7. Naming Conventions
 
-| Identifier | Convention | Example |
-| :--- | :--- | :--- |
-| **Files and Folders** | `kebab-case.suffix.ts` | `auth.controller.ts`, `user.service.ts` |
-| **Classes / Types / Interfaces** | `PascalCase` | `UserResponseDto`, `AuthService`, `AppError` |
-| **Functions and Variables** | `camelCase` | `findUserByEmail`, `accessToken`, `hashPassword` |
-| **Constants and Enums** | `UPPER_SNAKE_CASE` | `DEFAULT_PAGE_SIZE`, `USER_ROLES` |
+| Identifier                       | Convention             | Example                                          |
+| :------------------------------- | :--------------------- | :----------------------------------------------- |
+| **Files and Folders**            | `kebab-case.suffix.ts` | `auth.controller.ts`, `user.service.ts`          |
+| **Classes / Types / Interfaces** | `PascalCase`           | `UserResponseDto`, `AuthService`, `AppError`     |
+| **Functions and Variables**      | `camelCase`            | `findUserByEmail`, `accessToken`, `hashPassword` |
+| **Constants and Enums**          | `UPPER_SNAKE_CASE`     | `DEFAULT_PAGE_SIZE`, `USER_ROLES`                |
