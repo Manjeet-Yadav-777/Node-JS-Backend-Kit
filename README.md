@@ -1,0 +1,108 @@
+# Production-Grade Reusable Backend Starter Kit
+
+An enterprise-ready, modular, and scalable backend boilerplate designed for rapid, production-grade API development with Node.js, Express, TypeScript, and MongoDB.
+
+---
+
+## Architecture Overview
+
+This starter kit follows a **Modular Monolith** architecture with strict separation of concerns across layers:
+
+- **`src/config/`**: Centralized, fail-fast configuration validated via Zod.
+- **`src/core/`**: Framework-agnostic foundation (custom error hierarchy, standard response format, pagination helpers, constants, types).
+- **`src/infrastructure/`**: Pluggable external service integrations (Database, Redis Cache, Kafka, BullMQ, Storage, Email).
+- **`src/shared/`**: Cross-cutting HTTP middlewares (Request ID tracing, rate limiting, auth guards, global error handling) and validation helpers.
+- **`src/modules/`**: Isolated, domain-driven business feature modules (e.g., `auth`, `users`, `notifications`).
+
+---
+
+## Project Structure
+
+```
+backend/
+├── src/
+│   ├── app.ts                          # Express application factory
+│   ├── server.ts                       # Server bootstrap and graceful shutdown
+│   ├── config/                         # Unified configuration and environment validation
+│   ├── core/                           # Core primitives (errors, http envelope, types)
+│   ├── infrastructure/                 # External service clients (MongoDB, Redis, Kafka)
+│   ├── shared/                         # Middlewares and cross-cutting helpers
+│   ├── modules/                        # Domain feature modules
+│   ├── jobs/                           # Background queue processors
+│   ├── events/                         # Event-driven publishers and consumers
+│   └── docs/                           # OpenAPI documentation
+├── tests/                              # Unit, integration, and E2E test suites
+├── scripts/                            # Database seed and generator scripts
+├── docker/                             # Dockerfile and Docker Compose configurations
+├── .env.example                        # Template for required environment variables
+├── package.json                        # Dependencies and scripts
+├── tsconfig.json                       # Strict TypeScript configuration
+└── PRD.md                              # Comprehensive requirements and checklist
+```
+
+---
+
+## Getting Started
+
+### 1. Prerequisites
+
+- **Node.js**: v20+ LTS
+- **npm**: v10+
+
+### 2. Environment Setup
+
+Copy the example environment configuration file:
+
+```bash
+cp .env.example .env
+```
+
+### 3. Available Scripts
+
+```bash
+# Start development server with hot reload
+npm run dev
+
+# Compile TypeScript to JavaScript
+npm run build
+
+# Start production build
+npm start
+
+# Run type checking without emit
+npm run typecheck
+
+# Run linter
+npm run lint
+
+# Format code with Prettier
+npm run format
+
+# Run automated tests
+npm run test
+```
+
+---
+
+## Quality Gates and Pre-Commit Hooks
+
+Every `git commit` automatically triggers:
+
+1. `tsc --noEmit` (Full project typecheck)
+2. `eslint --fix` (Linting on staged files)
+3. `prettier --write` (Formatting on staged files)
+
+---
+
+## Current Roadmap Status
+
+- [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates _(In Progress)_
+- [ ] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation
+- [ ] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security
+- [ ] **Phase 4:** Redis Caching, Distributed Locks, Rate Limiting
+- [ ] **Phase 5:** BullMQ Background Jobs & Workers
+- [ ] **Phase 6:** Email, Notifications, Storage (S3 / Local), PDF Generation
+- [ ] **Phase 7:** Kafka Event-Driven Messaging & Transactional Outbox
+- [ ] **Phase 8:** Structured Observability, Prometheus Metrics, Full Testing
+- [ ] **Phase 9:** Dockerization, CI/CD, OpenAPI / Swagger Docs
+- [ ] **Phase 10:** Multi-Tenancy, Reliability Patterns, Final Developer Kit
