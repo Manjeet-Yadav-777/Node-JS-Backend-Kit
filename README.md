@@ -128,3 +128,9 @@ Every `git commit` automatically triggers:
 - **Zero-Boilerplate Schema Validation**: Higher-order middleware accepting Zod schemas for `body`, `query`, and `params`.
 - **Safe Type Coercion & Stripping**: Safely parses and strips unknown properties, coercing query types before reaching controllers.
 - **Standardized Error Formatting**: Catches `ZodError` and transforms issues into standard `ApiResponse.error` with HTTP 400 and `VALIDATION_ERROR` code.
+
+### 4. User Validation Schemas & DTOs (`src/modules/users/users.validation.ts`)
+
+- **Strict Contracts**: Zod schemas for registration (`registerUserSchema`), login (`loginUserSchema`), profile updates (`updateUserSchema`), and paginated search queries (`queryUsersSchema`).
+- **Normalized Data**: Automatic trimming and lowercasing on emails, strict regex enforcement for complex passwords and MongoDB `tenantId` format.
+- **Static TypeScript Inferences**: Exports clean compile-time DTO types (`RegisterUserDto`, `LoginUserDto`, `UpdateUserDto`, `QueryUsersDto`) with zero `any`.
