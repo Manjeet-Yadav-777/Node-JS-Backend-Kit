@@ -1,122 +1,128 @@
-# 🛡️ Backend Engineering Rules & Guidelines (AGENTS.md)
-> **Maksad:** Is project mein koi bhi "ant-shant" ya hacky code nahi likha jayega. Har ek file, function aur variable production-grade standards ko strictly follow karega.
+# Backend Engineering Rules and Operating Guidelines
+
+## 1. Operating and Agent Behavioral Constraints
+
+1. **Rule Precedence:** Review and strictly follow all rules defined in this file before executing any task or writing code.
+2. **Concise Communication:** Keep explanations concise. Do not overdescribe concepts or add unnecessary conversational bloat.
+3. **No Unnecessary Complexity:** Keep implementations clean, simple, and pragmatic. Avoid premature abstractions and over-engineering.
+4. **Safety and Deletion Permissions:** Never drop tables, truncate collections, or delete database records without explicit user confirmation.
+5. **Workspace Boundary:** Do not read, write, or access any files or directories outside this project repository (`/Users/manjeetyadav/Desktop/Backend`) without explicit permission.
+6. **No Emojis in Code:** Do not use emojis in code files, log statements, comments, or git commit messages.
+7. **Minimal and Meaningful Comments:**
+   - Do not comment line-by-line or explain trivial code.
+   - Add comments only where complex business logic, security decisions, or non-obvious workarounds exist.
+   - All code comments must be short, clear, and written in English.
+8. **Strict Code Reuse (DRY):** Always inspect existing files, utilities, schemas, and helpers before creating new ones. Never duplicate functionality.
+9. **Language Policy:**
+   - All code, files, documentation, commit messages, and comments must be strictly in English.
+   - Conversational discussion with the user may use Hindi/Hinglish as requested.
 
 ---
 
-## 1. 🏛️ Architectural Rules (The 4-Layer Rule)
+## 2. Architectural Rules (The 4-Layer Rule)
 
-Is backend mein code hamesha **ek hi direction (unidirectional)** mein flow karega:
-`Route ➡️ Middleware ➡️ Controller ➡️ Service ➡️ Repository/Database`
+All application code must flow unidirectionally:
+`Route -> Middleware -> Controller -> Service -> Repository/Database`
 
 1. **Routes Layer (`*.routes.ts`):**
-   - Sirf URL endpoints, HTTP methods, aur unke upar middlewares (auth, validation) define honge.
-   - Koi business logic ya direct DB access nahi.
+   - Define only URL endpoints, HTTP methods, and attached middlewares (auth, validation).
+   - No business logic or database interactions allowed.
 
 2. **Controller Layer (`*.controller.ts`):**
-   - Controller ka kaam sirf **HTTP Transport** handle karna hai.
-   - `req.body`, `req.params`, `req.query` se data extract karega aur Service function ko pass karega.
-   - Service se return huye data ko `ApiResponse.success(res, ...)` ke through client ko bhejega.
-   - ❌ **STRICT RULE:** Controller ke andar **kabhi bhi** database queries (`prisma.user.findMany`, SQL, etc.) nahi likhi jayengi.
-   - ❌ **STRICT RULE:** Controller mein koi business calculations nahi hongi.
+   - Handles HTTP transport only.
+   - Extracts data from `req.body`, `req.params`, and `req.query`, and delegates execution to the corresponding Service method.
+   - Dispatches standardized responses using `ApiResponse.success(res, ...)`.
+   - Never write database queries (Prisma/SQL) inside controllers.
+   - Never perform business calculations inside controllers.
 
 3. **Service Layer (`*.service.ts`):**
-   - Sabhi business logic, calculations, aur decision making yahan hogi.
-   - ❌ **STRICT RULE:** Service function ke parameters mein kabhi bhi Express ka `req` ya `res` object pass **nahi** hoga.
-   - Service functions hamesha pure data inputs lenge (jaise `userId: string`, `data: RegisterUserDto`) aur pure data return karenge ya Custom Error throw karenge.
-   - Isse aapki Services 100% testable aur reusable banti hain (kal ko agar Express ki jagah Fastify ya CLI command chalana ho, toh service bina kisi change ke chalegi).
+   - Houses all business logic, data transformation, calculations, and orchestration.
+   - Never pass Express `req` or `res` objects into service methods.
+   - Service methods must accept pure data parameters (e.g., `userId: string`, `dto: CreateUserDto`) and return pure data or throw custom error instances.
 
 4. **Repository / Database Layer (`*.repository.ts` / Prisma):**
-   - Sirf Database queries aur data mutations yahan execute honge.
+   - Executes database operations, data persistence, and query building.
 
 ---
 
-## 2. 💎 TypeScript & Type Safety (Zero 'any' Policy)
+## 3. TypeScript and Type Safety (Zero 'any' Policy)
 
-- ❌ **NO `any` ALLOWED:** Kisi bhi variable, parameter, ya return type mein `any` use karna strictly prohibited hai.
-- Agar type uncertain hai toh `unknown` use karo aur type-guard lagao.
-- **Zod for DTOs:** Har incoming request body, query, aur param ka Zod schema banega. TypeScript types Zod se infer honge:
+- The `any` type is strictly forbidden across variables, parameters, and return types.
+- If a type is uncertain, use `unknown` with runtime type narrowing.
+- All request payloads (body, query, params) must be defined with Zod schemas, and TypeScript types must be inferred:
   ```ts
-  // ✅ Sahi tarika:
   export const createUserSchema = z.object({
     email: z.string().email(),
     password: z.string().min(8)
   });
   export type CreateUserDto = z.infer<typeof createUserSchema>;
   ```
-- **Strict Mode:** `tsconfig.json` mein `strict: true`, `noImplicitAny: true`, `strictNullChecks: true` hamesha on rahega.
-- Non-null assertions (`!`) avoid karo jab tak mathematical certainty na ho.
+- Strict mode settings (`strict: true`, `noImplicitAny: true`, `strictNullChecks: true`) must remain enabled.
+- Avoid non-null assertions (`!`) unless mathematically proven and guaranteed.
 
 ---
 
-## 3. 🚨 Error Handling & Response Standards
+## 4. Error Handling and Response Standards
 
 1. **Centralized Custom Errors:**
-   - Har error standard custom class se throw hoga:
+   - Errors must be thrown using designated custom classes extending a base `AppError`:
      - `BadRequestError (400)`
      - `UnauthorizedError (401)`
      - `ForbiddenError (403)`
      - `NotFoundError (404)`
      - `ConflictError (409)`
      - `InternalServerError (500)`
-   - ❌ Controller ya Service mein empty `catch (e) {}` blocks likhna mana hai.
+   - Empty `catch (error) {}` blocks are strictly prohibited.
 
-2. **Standard API Response Format:**
-   - Har single API response is format ko follow karegi:
-   ```json
-   {
-     "success": true,
-     "statusCode": 200,
-     "message": "User fetched successfully",
-     "data": { ... },
-     "meta": null
-   }
-   ```
-   - Error ke case mein:
-   ```json
-   {
-     "success": false,
-     "statusCode": 400,
-     "message": "Validation failed",
-     "error": { "code": "VALIDATION_ERROR", "details": [ ... ] }
-   }
-   ```
-   - Production mein internal database stack trace kabhi client ko expose nahi kiya jayega.
-
----
-
-## 4. 🪵 Logging & Observability
-
-- ❌ **NO `console.log()`:** Production code mein direct `console.log()` use karna mana hai.
-- Hamesha centralized structured logger (`Pino`) use karo:
-  - `logger.info(...)` - Normal flow & startup events
-  - `logger.warn(...)` - Non-breaking anomalies (e.g. rate limit hit)
-  - `logger.error(...)` - Failures & exceptions
-- Har request ke sath unique `x-request-id` correlate hoga taaki debugging aasan ho.
+2. **Consistent Response Envelope:**
+   - Success format:
+     ```json
+     {
+       "success": true,
+       "statusCode": 200,
+       "message": "Resource fetched successfully",
+       "data": { ... },
+       "meta": null
+     }
+     ```
+   - Error format:
+     ```json
+     {
+       "success": false,
+       "statusCode": 400,
+       "message": "Validation failed",
+       "error": { "code": "VALIDATION_ERROR", "details": [ ... ] }
+     }
+     ```
+   - Never expose internal database stack traces or raw errors in production responses.
 
 ---
 
-## 5. 🔒 Security & Secrets Hygiene
+## 5. Logging and Observability
 
-- ❌ **NO HARDCODED SECRETS:** Ports, Database URLs, JWT secrets, API keys kabhi code mein hardcode nahi honge.
-- Har environment variable `src/config/env.ts` mein Zod schema ke through validate hoga.
-- Passwords ko hamesha **Argon2id** ya **Bcrypt (min salt rounds 12)** se hash karna hai. Plaintext passwords kabhi logs ya memory mein leak nahi hone chahiye.
-- Sensitive endpoints par **Rate Limiter** aur **CORS** hamesha enabled rahega.
+- Do not use `console.log()` in application code.
+- Use a centralized structured logger (Pino):
+  - `logger.info(...)`: Application startup, lifecycle events, state transitions.
+  - `logger.warn(...)`: Non-critical warnings, rate-limit warnings.
+  - `logger.error(...)`: Unhandled exceptions, failed third-party integrations.
+- Attach a unique `x-request-id` to every incoming request for tracing.
 
 ---
 
-## 6. 📁 Clean Naming Conventions
+## 6. Security and Configuration Hygiene
 
-| Item | Convention | Example |
+- Never hardcode secrets, ports, database credentials, or API keys.
+- All environment variables must be validated at startup via Zod in `src/config/env.ts`.
+- Passwords must be hashed using Argon2id or Bcrypt (minimum 12 rounds).
+- Sensitive routes must implement rate limiting and CORS protection.
+
+---
+
+## 7. Naming Conventions
+
+| Identifier | Convention | Example |
 | :--- | :--- | :--- |
-| **Files & Folders** | `kebab-case.suffix.ts` | `auth.controller.ts`, `user.service.ts` |
+| **Files and Folders** | `kebab-case.suffix.ts` | `auth.controller.ts`, `user.service.ts` |
 | **Classes / Types / Interfaces** | `PascalCase` | `UserResponseDto`, `AuthService`, `AppError` |
-| **Functions & Variables** | `camelCase` | `findUserByEmail`, `accessToken`, `hashPassword` |
-| **Constants & Enums** | `UPPER_SNAKE_CASE` | `DEFAULT_PAGE_SIZE`, `USER_ROLES` |
-
----
-
-## 7. 🤝 Pair Programming & Git Workflow
-
-- Code likhne se pehle har phase ka overview clear kiya jayega.
-- Har major module / milestone ke baad clean git commit kiya jayega (`feat: ...`, `fix: ...`).
-- Code readable, well-commented, aur beginner-friendly maintainable hoga.
+| **Functions and Variables** | `camelCase` | `findUserByEmail`, `accessToken`, `hashPassword` |
+| **Constants and Enums** | `UPPER_SNAKE_CASE` | `DEFAULT_PAGE_SIZE`, `USER_ROLES` |
