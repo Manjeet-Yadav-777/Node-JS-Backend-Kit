@@ -4,8 +4,8 @@ import {
   loginUserSchema,
   updateUserSchema,
   queryUsersSchema,
-} from '../../src/modules/users';
-import { USER_ROLES } from '../../src/core';
+} from '../../../src/modules/users';
+import { USER_ROLES } from '../../../src/core';
 
 describe('User Module Zod Validation Schemas', () => {
   describe('registerUserSchema', () => {

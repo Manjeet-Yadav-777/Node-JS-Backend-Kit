@@ -134,3 +134,10 @@ Every `git commit` automatically triggers:
 - **Strict Contracts**: Zod schemas for registration (`registerUserSchema`), login (`loginUserSchema`), profile updates (`updateUserSchema`), and paginated search queries (`queryUsersSchema`).
 - **Normalized Data**: Automatic trimming and lowercasing on emails, strict regex enforcement for complex passwords and MongoDB `tenantId` format.
 - **Static TypeScript Inferences**: Exports clean compile-time DTO types (`RegisterUserDto`, `LoginUserDto`, `UpdateUserDto`, `QueryUsersDto`) with zero `any`.
+
+### 5. User Domain Service (`src/modules/users/users.service.ts`)
+
+- **Pure Business Logic Layer**: Fully decoupled from HTTP transport (never touches Express `req`/`res`).
+- **Cryptographic Security**: Hashes user passwords using `bcryptjs` with standard 12 salt rounds before persisting.
+- **Multi-Tenant Isolation**: Enforces tenant boundary scoping on queries (`_id`, `tenantId`) and validates ObjectId formats.
+- **Domain Operations**: Provides `createUser`, `getUserById`, `getUserByEmail`, `getUserWithPasswordByEmail`, `updateUser`, and paginated `listUsers`.

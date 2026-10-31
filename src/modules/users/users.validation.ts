@@ -51,7 +51,7 @@ export const queryUsersSchema = z.object({
   role: z.enum([USER_ROLES.USER, USER_ROLES.ADMIN]).optional(),
 });
 
-export type RegisterUserDto = z.infer<typeof registerUserSchema>;
+export type RegisterUserDto = z.input<typeof registerUserSchema>;
 export type LoginUserDto = z.infer<typeof loginUserSchema>;
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 export type QueryUsersDto = z.infer<typeof queryUsersSchema>;
