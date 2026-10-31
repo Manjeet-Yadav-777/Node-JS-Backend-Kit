@@ -98,9 +98,9 @@ Every `git commit` automatically triggers:
 
 - [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates
 - [x] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation
-- [ ] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security
-
+- [x] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security _(In Progress)_
 - [ ] **Phase 4:** Redis Caching, Distributed Locks, Rate Limiting
+
 - [ ] **Phase 5:** BullMQ Background Jobs & Workers
 - [ ] **Phase 6:** Email, Notifications, Storage (S3 / Local), PDF Generation
 - [ ] **Phase 7:** Kafka Event-Driven Messaging & Transactional Outbox
@@ -157,3 +157,9 @@ Every `git commit` automatically triggers:
   - `GET /api/v1/users`: Validated with `queryUsersSchema` -> `UsersController.listUsers` (HTTP 200).
   - `GET /api/v1/users/:id`: -> `UsersController.getUserById` (HTTP 200).
   - `PATCH /api/v1/users/:id`: Validated with `updateUserSchema` -> `UsersController.updateUser` (HTTP 200).
+
+### 8. JWT Token Utility (`src/core/utils/jwt.util.ts`)
+
+- **Enterprise Token Lifecycle**: Handles signing and verification for short-lived Access Tokens (`15m`) and long-lived Refresh Tokens (`7d`).
+- **Embedded Multi-Tenant Payload**: Cryptographically embeds `userId`, `role`, and `tenantId` in the JWT payload, enabling automatic downstream tenant binding without manual client headers.
+- **Fail-Safe Verification**: Automatically catches `TokenExpiredError` or signature tampering and throws designated `UnauthorizedError` instances handled by the global error middleware.
