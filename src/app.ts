@@ -1,12 +1,8 @@
 import express, { Application, Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import { env } from './config/env';
-import { isDatabaseConnected } from './config/database';
-import { requestIdMiddleware } from './common/middlewares/request-id.middleware';
-import { errorMiddleware } from './common/middlewares/error.middleware';
-import { NotFoundError } from './common/errors/app-error';
-import { ApiResponse } from './common/utils/api-response';
+import { env, isDatabaseConnected } from './config';
+import { requestIdMiddleware, errorMiddleware, NotFoundError, ApiResponse } from './common';
 
 export function createApp(): Application {
   const app: Application = express();

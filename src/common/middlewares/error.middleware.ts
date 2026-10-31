@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { AppError } from '../errors/app-error';
-import { ApiResponse } from '../utils/api-response';
-import { logger } from '../../config/logger';
-import { env } from '../../config/env';
+import { AppError } from '../errors';
+import { ApiResponse } from '../utils';
+import { logger, env } from '../../config';
 
 export function errorMiddleware(
   err: unknown,

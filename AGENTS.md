@@ -16,6 +16,10 @@
 9. **Language Policy:**
    - All code, files, documentation, commit messages, and comments must be strictly in English.
    - Conversational discussion with the user may use Hindi/Hinglish as requested.
+10. **Barrel Export Pattern (`index.ts`):**
+
+- Every module, subfolder, and utility directory must maintain an `index.ts` file exporting public functions, classes, and types.
+- Imports must resolve through directory barrel files rather than deep relative file paths.
 
 ---
 

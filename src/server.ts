@@ -1,7 +1,5 @@
 import { createApp } from './app';
-import { env } from './config/env';
-import { logger } from './config/logger';
-import { connectDatabase, disconnectDatabase } from './config/database';
+import { env, logger, connectDatabase, disconnectDatabase } from './config';
 
 async function bootstrap(): Promise<void> {
   const app = createApp();
