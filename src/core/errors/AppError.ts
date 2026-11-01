@@ -52,6 +52,12 @@ export class ConflictError extends AppError {
   }
 }
 
+export class TooManyRequestsError extends AppError {
+  constructor(message = 'Too many requests, please try again later', details?: unknown) {
+    super(message, 429, ERROR_CODES.RATE_LIMIT_EXCEEDED, details);
+  }
+}
+
 export class InternalServerError extends AppError {
   constructor(message = 'Internal server error', details?: unknown) {
     super(message, 500, ERROR_CODES.INTERNAL_SERVER_ERROR, details);

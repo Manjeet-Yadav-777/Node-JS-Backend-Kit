@@ -384,6 +384,38 @@ export class OrderService {
 3. **Safe Lua Release**: Uses an atomic Lua script to verify token identity before deleting. This prevents a worker from deleting another worker's lock if its own execution exceeded the TTL.
 4. **Fail-Safe Cleanup**: The `withLock` wrapper guarantees release in a `finally` block even if the task throws an unhandled error.
 
+#### Sliding-Window Rate Limiting (`rateLimiter`)
+
+Protect endpoints against brute-force attacks, credential stuffing, and API flooding using Redis atomic sliding-window pipelines:
+
+```typescript
+import { Router } from 'express';
+import { rateLimiter } from '../shared';
+
+const router = Router();
+
+// 1. Strict limiter for authentication / sensitive endpoints (5 attempts per 15 min):
+const authLimiter = rateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many login attempts, please try again after 15 minutes',
+  keyPrefix: 'auth_login',
+});
+
+router.post('/login', authLimiter, AuthController.login);
+
+// 2. High-throughput API limiter (e.g. 100 requests per minute):
+const apiLimiter = rateLimiter({
+  windowMs: 60 * 1000,
+  max: 100,
+  keyPrefix: 'api_general',
+});
+```
+
+- **Standards-Compliant Headers**: Injects `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` into HTTP response headers.
+- **Fail-Open Reliability**: If Redis is unreachable, requests are permitted without crashing the API.
+- **Standard HTTP 429 Envelope**: Exceeding the quota dispatches a standardized `ApiResponse.error` with a `Retry-After` header.
+
 #### Raw Client & Health Probes
 
 ```typescript

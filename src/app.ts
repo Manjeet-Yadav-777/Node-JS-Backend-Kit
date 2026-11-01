@@ -4,7 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { appConfig } from './config';
 import { NotFoundError, ApiResponse } from './core';
-import { requestIdMiddleware, tenantMiddleware, errorMiddleware } from './shared';
+import { requestIdMiddleware, tenantMiddleware, errorMiddleware, rateLimiter } from './shared';
 import { healthRoutes, userRoutes, authRoutes } from './modules';
 
 export function createApp(): Application {
@@ -29,6 +29,7 @@ export function createApp(): Application {
 
   // API router v1
   const apiRouter = express.Router();
+  apiRouter.use(rateLimiter({ windowMs: 15 * 60 * 1000, max: 100 }));
   apiRouter.get('/', (_req: Request, res: Response) => {
     ApiResponse.success(
       res,

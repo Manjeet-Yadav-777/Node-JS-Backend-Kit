@@ -258,7 +258,7 @@ backend/
 - [ ] Cache key conventions
 - [x] Distributed locks
 - [ ] Atomic counters
-- [ ] Redis-based rate limiter
+- [x] Redis-based rate limiter
 - [x] Redis health checks
 
 ### F. Kafka and Event-Driven Architecture
