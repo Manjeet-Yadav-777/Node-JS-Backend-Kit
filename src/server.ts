@@ -1,6 +1,6 @@
 import { createApp } from './app';
 import { appConfig, logger } from './config';
-import { connectMongoDB, disconnectMongoDB } from './infrastructure';
+import { connectMongoDB, disconnectMongoDB, connectRedis, disconnectRedis } from './infrastructure';
 
 async function bootstrap(): Promise<void> {
   const app = createApp();
@@ -9,6 +9,12 @@ async function bootstrap(): Promise<void> {
     await connectMongoDB();
   } catch (error) {
     logger.warn({ error }, 'MongoDB connection initialization failed, continuing in degraded mode');
+  }
+
+  try {
+    await connectRedis();
+  } catch (error) {
+    logger.warn({ error }, 'Redis connection initialization failed, continuing in degraded mode');
   }
 
   const server = app.listen(appConfig.port, () => {
@@ -26,6 +32,7 @@ async function bootstrap(): Promise<void> {
       }
 
       await disconnectMongoDB();
+      await disconnectRedis();
       process.exit(err ? 1 : 0);
     });
 
