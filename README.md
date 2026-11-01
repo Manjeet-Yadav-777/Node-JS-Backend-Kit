@@ -1,22 +1,470 @@
 # Production-Grade Reusable Backend Starter Kit
 
-An enterprise-ready, modular, and scalable backend boilerplate designed for rapid, production-grade API development with Node.js, Express, TypeScript, and MongoDB.
+An enterprise-ready, modular, and scalable backend boilerplate designed for rapid, production-grade API development with Node.js, Express, TypeScript, MongoDB, and Redis.
 
 ---
 
-## Architecture Overview
+## 1. Architectural Philosophy
 
-This starter kit follows a **Modular Monolith** architecture with strict separation of concerns across layers:
+This starter kit follows a **Modular Monolith** architecture with strict unidirectional flow:
 
-- **`src/config/`**: Centralized, fail-fast configuration validated via Zod.
-- **`src/core/`**: Framework-agnostic foundation (custom error hierarchy, standard response format, pagination helpers, constants, types).
-- **`src/infrastructure/`**: Pluggable external service integrations (Database, Redis Cache, Kafka, BullMQ, Storage, Email).
-- **`src/shared/`**: Cross-cutting HTTP middlewares (Request ID tracing, rate limiting, auth guards, global error handling) and validation helpers.
-- **`src/modules/`**: Isolated, domain-driven business feature modules (e.g., `auth`, `users`, `notifications`).
+```
+Request -> Middlewares -> Controller -> Service -> Model / Infrastructure -> Standard Envelope
+```
+
+### Core Invariants
+
+1. **Routes Layer (`*.routes.ts`)**: Defines URL endpoints, HTTP methods, and attaches validation/auth middlewares. Contains zero business logic.
+2. **Controller Layer (`*.controller.ts`)**: Pure HTTP transport layer. Extracts data from `req.body`, `req.params`, and `req.query`, invokes the service, and sends a standardized envelope via `ApiResponse.success(res, ...)`. Never executes database queries or business calculations.
+3. **Service Layer (`*.service.ts`)**: Pure domain and business logic. Accepts pure data parameters (e.g., `userId: string`, `dto: CreateUserDto`) and returns plain data objects or throws custom operational errors. Never receives Express `req` or `res` objects.
+4. **Model Layer (`*.model.ts`)**: Houses Mongoose schemas, types, validation rules, and indexes. Sensitive fields (like `password` and `refreshToken`) have `select: false` enforced at schema level.
+5. **Zero `any` TypeScript**: Strict type safety across all variables, inputs, outputs, and generics with Zod runtime validation.
+6. **Multi-Tenancy by Default**: Built-in support for single-tenant B2C applications and multi-tenant B2B SaaS workspaces with automatic tenant context propagation.
 
 ---
 
-## Project Structure
+## 2. Quick Start
+
+### Prerequisites
+
+- **Node.js**: v20+ LTS
+- **npm**: v10+
+- **MongoDB**: v6+ (local or MongoDB Atlas URI)
+- **Redis**: v7+ (local or cloud Redis instance)
+
+### Setup & Run
+
+```bash
+# 1. Clone repository
+git clone https://github.com/Manjeet-Yadav-777/Node-JS-Backend-Kit.git
+cd Node-JS-Backend-Kit
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment variables
+cp .env.example .env
+
+# 4. Start local development server (with hot reload)
+npm run dev
+
+# 5. Run test suite
+npm run test
+```
+
+The server starts at `http://localhost:5000` by default.
+
+---
+
+## 3. Developer Usage Guides & Code Examples
+
+### 3.1 Error Handling & Standard Responses
+
+The API uses a centralized error-handling pipeline and a standardized JSON envelope for all responses.
+
+#### Throwing Operational Errors
+
+Never return manual HTTP error responses in your services or business logic. Throw designated subclasses of `AppError`. The global error middleware automatically intercepts them and formats the response:
+
+```typescript
+import {
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+  ConflictError,
+} from '../core';
+
+// Inside any Service or Business function:
+export class OrderService {
+  async getOrderById(orderId: string, tenantId: string | null) {
+    const order = await OrderModel.findOne({ _id: orderId, tenantId });
+    if (!order) {
+      throw new NotFoundError(`Order with ID ${orderId} does not exist`);
+    }
+    return order;
+  }
+
+  async cancelOrder(order: OrderDocument, userId: string) {
+    if (order.customerId !== userId) {
+      throw new ForbiddenError('You do not have permission to cancel this order');
+    }
+    if (order.status === 'SHIPPED') {
+      throw new ConflictError('Cannot cancel an order that has already shipped');
+    }
+    // Update logic...
+  }
+}
+```
+
+#### Sending Success Responses in Controllers
+
+Always use `ApiResponse.success` in your controllers:
+
+```typescript
+import { Request, Response } from 'express';
+import { ApiResponse } from '../../core';
+import { orderService } from './order.service';
+
+export class OrderController {
+  static async getOrder(req: Request, res: Response): Promise<void> {
+    const order = await orderService.getOrderById(req.params.id, req.tenantId ?? null);
+
+    ApiResponse.success(res, order, 'Order retrieved successfully', 200);
+  }
+
+  static async listOrders(req: Request, res: Response): Promise<void> {
+    const { items, pagination } = await orderService.listOrders(req.query, req.tenantId ?? null);
+
+    ApiResponse.success(
+      res,
+      items,
+      'Orders retrieved successfully',
+      200,
+      pagination, // { page: 1, limit: 10, total: 42, totalPages: 5, hasNextPage: true, hasPrevPage: false }
+    );
+  }
+}
+```
+
+#### Standard JSON Response Envelopes
+
+Success Envelope:
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Order retrieved successfully",
+  "data": {
+    "id": "672465e128cb5541e4000001",
+    "total": 4999,
+    "status": "PROCESSING"
+  },
+  "meta": {
+    "timestamp": "2026-11-01T10:00:00.000Z",
+    "requestId": "d290f1ee-6c54-4b01-90e6-d701748f0851"
+  }
+}
+```
+
+Error Envelope:
+
+```json
+{
+  "success": false,
+  "statusCode": 404,
+  "message": "Order with ID 672465e128cb5541e4000001 does not exist",
+  "error": {
+    "code": "NOT_FOUND",
+    "details": null
+  },
+  "meta": {
+    "timestamp": "2026-11-01T10:00:00.000Z",
+    "requestId": "d290f1ee-6c54-4b01-90e6-d701748f0851"
+  }
+}
+```
+
+---
+
+### 3.2 Request Validation (Zod)
+
+Every incoming HTTP request must be validated using Zod schemas before hitting the controller.
+
+#### Defining Schemas & DTOs (`*.validation.ts`)
+
+```typescript
+import { z } from 'zod';
+
+export const createProductSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters'),
+  price: z.number().positive('Price must be greater than zero'),
+  category: z.string().trim(),
+  tags: z.array(z.string()).default([]),
+});
+
+export const queryProductsSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(10),
+  search: z.string().trim().optional(),
+});
+
+// Infer static TypeScript types from schemas:
+export type CreateProductDto = z.input<typeof createProductSchema>;
+export type QueryProductsDto = z.infer<typeof queryProductsSchema>;
+```
+
+#### Attaching Validation Middleware (`*.routes.ts`)
+
+```typescript
+import { Router } from 'express';
+import { validate } from '../../shared/middleware';
+import { createProductSchema, queryProductsSchema } from './product.validation';
+import { ProductController } from './product.controller';
+
+const router = Router();
+
+// Validate query params:
+router.get('/', validate({ query: queryProductsSchema }), ProductController.listProducts);
+
+// Validate request body:
+router.post('/', validate({ body: createProductSchema }), ProductController.createProduct);
+
+export default router;
+```
+
+---
+
+### 3.3 Authentication, Cookies & Role-Based Access Control (RBAC)
+
+The kit includes a dual-mode authentication system:
+
+- **Web Applications**: Uses `httpOnly`, `secure`, `sameSite: strict` browser cookies to prevent XSS attacks.
+- **Mobile / API Clients**: Supports standard `Authorization: Bearer <token>` headers.
+
+#### Protecting Routes with `authenticate` & `authorize`
+
+```typescript
+import { Router } from 'express';
+import { authenticate, authorize } from '../../shared/middleware';
+import { USER_ROLES } from '../../core';
+import { AdminController } from './admin.controller';
+
+const router = Router();
+
+// 1. Any authenticated user:
+router.get('/profile', authenticate, AdminController.getProfile);
+
+// 2. Restricted to ADMIN role only:
+router.delete('/users/:id', authenticate, authorize(USER_ROLES.ADMIN), AdminController.deleteUser);
+
+// 3. Restricted to multiple roles:
+router.patch(
+  '/settings',
+  authenticate,
+  authorize(USER_ROLES.ADMIN, 'super_admin'),
+  AdminController.updateSettings,
+);
+
+export default router;
+```
+
+#### Accessing Authenticated User Context
+
+In controllers or route handlers, access the strongly typed `req.user` directly:
+
+```typescript
+export class ProfileController {
+  static async getProfile(req: Request, res: Response): Promise<void> {
+    // req.user is guaranteed to exist when route is protected by `authenticate`:
+    const { userId, role, tenantId } = req.user!;
+
+    const user = await usersService.getUserById(userId, tenantId);
+    ApiResponse.success(res, user, 'Profile fetched successfully');
+  }
+}
+```
+
+---
+
+### 3.4 Multi-Tenancy Architecture (B2B SaaS Ready)
+
+The kit supports automatic multi-tenant context extraction without requiring manual parameter passing:
+
+1. **Pre-Authentication / Public Calls**: The client sends the tenant identifier in the `x-tenant-id` HTTP header.
+2. **Post-Authentication**: The JWT token contains the user's `tenantId`. The `authenticate` middleware automatically extracts it and binds it to `req.tenantId` and the `x-tenant-id` response header.
+
+#### Querying Database in a Multi-Tenant Context
+
+Always scope database queries using `req.tenantId`:
+
+```typescript
+export class DocumentService {
+  async listDocuments(tenantId: string | null) {
+    const filter: Record<string, unknown> = {};
+    if (tenantId) {
+      filter.tenantId = tenantId;
+    }
+
+    return DocumentModel.find(filter).lean();
+  }
+}
+```
+
+---
+
+### 3.5 Redis Cache & Connection Management
+
+The starter kit uses `ioredis` with automatic exponential backoff reconnection strategies and graceful process termination.
+
+#### Accessing Redis Client
+
+```typescript
+import { getRedisClient, isRedisConnected } from '../infrastructure';
+
+// 1. Check if Redis is operational:
+if (isRedisConnected()) {
+  const client = getRedisClient();
+  await client.set('cache:user:123', JSON.stringify(userData), 'EX', 3600);
+}
+
+// 2. Retrieve cached item:
+const cached = await getRedisClient().get('cache:user:123');
+if (cached) {
+  return JSON.parse(cached);
+}
+```
+
+#### System Health Check Endpoint
+
+Call `GET /healthz` to inspect real-time service health:
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Service health report",
+  "data": {
+    "status": "healthy",
+    "timestamp": "2026-11-01T10:00:00.000Z",
+    "uptime": 124.5,
+    "environment": "development",
+    "services": {
+      "database": "connected",
+      "redis": "connected"
+    }
+  }
+}
+```
+
+---
+
+### 3.6 Step-by-Step Tutorial: How to Add a New Domain Module
+
+Follow these steps to create a new module (for example: `orders`):
+
+#### Step 1: Create Model (`src/modules/orders/orders.model.ts`)
+
+```typescript
+import { Schema, model, Document } from 'mongoose';
+
+export interface IOrder extends Document {
+  tenantId?: Schema.Types.ObjectId;
+  customerId: string;
+  total: number;
+  status: string;
+}
+
+const orderSchema = new Schema<IOrder>(
+  {
+    tenantId: { type: Schema.Types.ObjectId, index: true },
+    customerId: { type: String, required: true, index: true },
+    total: { type: Number, required: true },
+    status: { type: String, default: 'PENDING' },
+  },
+  { timestamps: true },
+);
+
+export const OrderModel = model<IOrder>('Order', orderSchema);
+```
+
+#### Step 2: Create Validation Schemas (`src/modules/orders/orders.validation.ts`)
+
+```typescript
+import { z } from 'zod';
+
+export const createOrderSchema = z.object({
+  customerId: z.string().trim().min(1),
+  total: z.number().positive(),
+});
+
+export type CreateOrderDto = z.input<typeof createOrderSchema>;
+```
+
+#### Step 3: Create Service (`src/modules/orders/orders.service.ts`)
+
+```typescript
+import { OrderModel } from './orders.model';
+import { CreateOrderDto } from './orders.validation';
+import { NotFoundError } from '../../core';
+
+export class OrdersService {
+  async createOrder(dto: CreateOrderDto, tenantId?: string | null) {
+    return OrderModel.create({ ...dto, tenantId });
+  }
+
+  async getOrderById(id: string, tenantId?: string | null) {
+    const order = await OrderModel.findOne({ _id: id, ...(tenantId && { tenantId }) });
+    if (!order) {
+      throw new NotFoundError(`Order ${id} not found`);
+    }
+    return order;
+  }
+}
+
+export const ordersService = new OrdersService();
+```
+
+#### Step 4: Create Controller (`src/modules/orders/orders.controller.ts`)
+
+```typescript
+import { Request, Response } from 'express';
+import { ordersService } from './orders.service';
+import { ApiResponse } from '../../core';
+
+export class OrdersController {
+  static async createOrder(req: Request, res: Response): Promise<void> {
+    const order = await ordersService.createOrder(req.body, req.tenantId);
+    ApiResponse.success(res, order, 'Order created successfully', 201);
+  }
+
+  static async getOrder(req: Request, res: Response): Promise<void> {
+    const order = await ordersService.getOrderById(req.params.id, req.tenantId);
+    ApiResponse.success(res, order, 'Order retrieved successfully', 200);
+  }
+}
+```
+
+#### Step 5: Create Routes (`src/modules/orders/orders.routes.ts`)
+
+```typescript
+import { Router } from 'express';
+import { OrdersController } from './orders.controller';
+import { authenticate, validate } from '../../shared/middleware';
+import { createOrderSchema } from './orders.validation';
+
+const router = Router();
+
+router.use(authenticate);
+router.post('/', validate({ body: createOrderSchema }), OrdersController.createOrder);
+router.get('/:id', OrdersController.getOrder);
+
+export default router;
+```
+
+#### Step 6: Create Barrel Export & Mount in `src/app.ts`
+
+In `src/modules/orders/index.ts`:
+
+```typescript
+export { default as orderRoutes } from './orders.routes';
+export * from './orders.service';
+export * from './orders.model';
+```
+
+In `src/app.ts`:
+
+```typescript
+import orderRoutes from './modules/orders/orders.routes';
+
+// Inside createApp():
+app.use('/api/v1/orders', orderRoutes);
+```
+
+---
+
+## 4. Project Structure
 
 ```
 backend/
@@ -24,186 +472,61 @@ backend/
 │   ├── app.ts                          # Express application factory
 │   ├── server.ts                       # Server bootstrap and graceful shutdown
 │   ├── config/                         # Unified configuration and environment validation
-│   ├── core/                           # Core primitives (errors, http envelope, types)
+│   ├── core/                           # Framework-agnostic foundation (errors, responses, types)
 │   ├── infrastructure/                 # External service clients (MongoDB, Redis, Kafka)
-│   ├── shared/                         # Middlewares and cross-cutting helpers
-│   ├── modules/                        # Domain feature modules
+│   │   ├── cache/                      # Redis connection and caching utilities
+│   │   └── database/                   # MongoDB Mongoose connection
+│   ├── shared/                         # Middlewares (auth, tenant, validation, rbac, error)
+│   ├── modules/                        # Domain feature modules (auth, users, health)
 │   ├── jobs/                           # Background queue processors
 │   ├── events/                         # Event-driven publishers and consumers
 │   └── docs/                           # OpenAPI documentation
 ├── tests/                              # Unit, integration, and E2E test suites
-├── scripts/                            # Database seed and generator scripts
-├── docker/                             # Dockerfile and Docker Compose configurations
-├── .env.example                        # Template for required environment variables
+│   └── unit/
+│       ├── auth/                       # Auth domain tests
+│       ├── cache/                      # Cache & Redis unit tests
+│       ├── core/                       # Core utility tests
+│       ├── shared/                     # Shared middleware tests
+│       └── users/                      # User domain tests
+├── .env.example                        # Example environment variables template
 ├── package.json                        # Dependencies and scripts
 ├── tsconfig.json                       # Strict TypeScript configuration
-└── PRD.md                              # Comprehensive requirements and checklist
+└── PRD.md                              # Complete product checklist and implementation phases
 ```
 
 ---
 
-## Getting Started
+## 5. Environment Variables Reference
 
-### 1. Prerequisites
-
-- **Node.js**: v20+ LTS
-- **npm**: v10+
-
-### 2. Environment Setup
-
-Copy the example environment configuration file:
-
-```bash
-cp .env.example .env
-```
-
-### 3. Available Scripts
-
-```bash
-# Start development server with hot reload
-npm run dev
-
-# Compile TypeScript to JavaScript
-npm run build
-
-# Start production build
-npm start
-
-# Run type checking without emit
-npm run typecheck
-
-# Run linter
-npm run lint
-
-# Format code with Prettier
-npm run format
-
-# Run automated tests
-npm run test
-```
+| Variable                 | Description                                                   | Required | Default                  |
+| :----------------------- | :------------------------------------------------------------ | :------- | :----------------------- |
+| `NODE_ENV`               | Application environment (`development`, `test`, `production`) | No       | `development`            |
+| `PORT`                   | HTTP server listening port                                    | No       | `5000`                   |
+| `API_PREFIX`             | Base path for REST API routes                                 | No       | `/api/v1`                |
+| `MONGODB_URI`            | MongoDB connection connection string                          | Yes      | -                        |
+| `REDIS_URL`              | Redis connection URL                                          | No       | `redis://localhost:6379` |
+| `JWT_ACCESS_SECRET`      | Secret key used for signing Access Tokens                     | Yes      | -                        |
+| `JWT_REFRESH_SECRET`     | Secret key used for signing Refresh Tokens                    | Yes      | -                        |
+| `JWT_ACCESS_EXPIRES_IN`  | Access token lifespan string (e.g. `15m`)                     | No       | `15m`                    |
+| `JWT_REFRESH_EXPIRES_IN` | Refresh token lifespan string (e.g. `7d`)                     | No       | `7d`                     |
+| `LOG_LEVEL`              | Pino log level (`trace`, `debug`, `info`, `warn`, `error`)    | No       | `info`                   |
 
 ---
 
-## Quality Gates and Pre-Commit Hooks
+## 6. Available Scripts
 
-Every `git commit` automatically triggers:
-
-1. `tsc --noEmit` (Full project typecheck)
-2. `eslint --fix` (Linting on staged files)
-3. `prettier --write` (Formatting on staged files)
-
----
-
-## Current Roadmap Status
-
-- [x] **Phase 1:** Foundation, Configuration, Error Handling, Quality Gates
-- [x] **Phase 2:** MongoDB + Mongoose Integration, Models, Validation
-- [x] **Phase 3:** Authentication (JWT, Refresh Tokens, Cookies), RBAC, Security
-- [ ] **Phase 4:** Redis Caching, Distributed Locks, Rate Limiting
-
-- [ ] **Phase 5:** BullMQ Background Jobs & Workers
-- [ ] **Phase 6:** Email, Notifications, Storage (S3 / Local), PDF Generation
-- [ ] **Phase 7:** Kafka Event-Driven Messaging & Transactional Outbox
-- [ ] **Phase 8:** Structured Observability, Prometheus Metrics, Full Testing
-- [ ] **Phase 9:** Dockerization, CI/CD, OpenAPI / Swagger Docs
-- [ ] **Phase 10:** Multi-Tenancy, Reliability Patterns, Final Developer Kit
+| Script              | Purpose                                                               |
+| :------------------ | :-------------------------------------------------------------------- |
+| `npm run dev`       | Runs application in development mode with hot reload                  |
+| `npm run build`     | Compiles TypeScript into distribution JavaScript (`dist/`)            |
+| `npm start`         | Executes the compiled production build from `dist/server.js`          |
+| `npm run test`      | Executes the complete Vitest test suite                               |
+| `npm run typecheck` | Validates TypeScript types across the entire project (`tsc --noEmit`) |
+| `npm run lint`      | Inspects code for style and syntax consistency with ESLint            |
+| `npm run format`    | Enforces code formatting rules across the codebase using Prettier     |
 
 ---
 
-## Implemented Modules
+## 7. Roadmap & Product Specifications
 
-### 1. User Model (`src/modules/users/users.model.ts`)
-
-- **Fields**: `name`, `email` (unique, lowercase, indexed), `password` (`select: false`), `role` (`user` / `admin`), `tenantId` (optional indexed ObjectId for SaaS multi-tenancy), `isEmailVerified`, `refreshToken` (`select: false`), timestamps.
-- **Security Invariant**: Sensitive fields (`password`, `refreshToken`) have `select: false` set at the schema level to prevent accidental data leaks in API responses.
-- **SaaS Multi-Tenancy Ready**: The optional indexed `tenantId` enables strict workspace/company data partitioning for B2B SaaS without affecting single-tenant B2C usage.
-
-### 2. Multi-Tenant Request Middleware (`src/shared/middleware/tenant.middleware.ts`)
-
-- **Automatic Extraction**: Automatically inspects every incoming HTTP request for the `x-tenant-id` header (or downstream auth token / subdomain) and securely binds it to `req.tenantId`.
-- **Response Reflection**: Attaches `x-tenant-id` to the response headers for end-to-end trace correlation and client-side workspace confirmation.
-- **Type-Safe**: Extends Express `Request` interface globally so `req.tenantId` is strictly typed (`string | null`) throughout all controllers, services, and middlewares without unsafe type assertions.
-
-### 3. Generic Validation Middleware (`src/shared/middleware/validation.middleware.ts`)
-
-- **Zero-Boilerplate Schema Validation**: Higher-order middleware accepting Zod schemas for `body`, `query`, and `params`.
-- **Safe Type Coercion & Stripping**: Safely parses and strips unknown properties, coercing query types before reaching controllers.
-- **Standardized Error Formatting**: Catches `ZodError` and transforms issues into standard `ApiResponse.error` with HTTP 400 and `VALIDATION_ERROR` code.
-
-### 4. User Validation Schemas & DTOs (`src/modules/users/users.validation.ts`)
-
-- **Strict Contracts**: Zod schemas for registration (`registerUserSchema`), login (`loginUserSchema`), profile updates (`updateUserSchema`), and paginated search queries (`queryUsersSchema`).
-- **Normalized Data**: Automatic trimming and lowercasing on emails, strict regex enforcement for complex passwords and MongoDB `tenantId` format.
-- **Static TypeScript Inferences**: Exports clean compile-time DTO types (`RegisterUserDto`, `LoginUserDto`, `UpdateUserDto`, `QueryUsersDto`) with zero `any`.
-
-### 5. User Domain Service (`src/modules/users/users.service.ts`)
-
-- **Pure Business Logic Layer**: Fully decoupled from HTTP transport (never touches Express `req`/`res`).
-- **Cryptographic Security**: Hashes user passwords using `bcryptjs` with standard 12 salt rounds before persisting.
-- **Multi-Tenant Isolation**: Enforces tenant boundary scoping on queries (`_id`, `tenantId`) and validates ObjectId formats.
-- **Domain Operations**: Provides `createUser`, `getUserById`, `getUserByEmail`, `getUserWithPasswordByEmail`, `updateUser`, and paginated `listUsers`.
-
-### 6. User Controller Layer (`src/modules/users/users.controller.ts`)
-
-- **Strict Transport Decoupling**: Extracts request payload (`body`, `params`, `query`, `tenantId`) and delegates directly to `usersService`.
-- **Zero Business Logic In Controllers**: Contains zero database queries or calculations; handles only HTTP marshalling and error forwarding.
-- **Standardized Responses**: Dispatches clean envelopes using `ApiResponse.success` with HTTP status codes and pagination metadata.
-
-### 7. User Routes Layer (`src/modules/users/users.routes.ts`)
-
-- **Declarative Route Mapping**: Binds endpoints under `/api/v1/users` cleanly without business logic.
-- **Pre-Controller Validation Guards**:
-  - `POST /api/v1/users`: Validated with `registerUserSchema` -> `UsersController.createUser` (HTTP 201).
-  - `GET /api/v1/users`: Validated with `queryUsersSchema` -> `UsersController.listUsers` (HTTP 200).
-  - `GET /api/v1/users/:id`: -> `UsersController.getUserById` (HTTP 200).
-  - `PATCH /api/v1/users/:id`: Validated with `updateUserSchema` -> `UsersController.updateUser` (HTTP 200).
-
-### 8. JWT Token Utility (`src/core/utils/jwt.util.ts`)
-
-- **Enterprise Token Lifecycle**: Handles signing and verification for short-lived Access Tokens (`15m`) and long-lived Refresh Tokens (`7d`).
-- **Embedded Multi-Tenant Payload**: Cryptographically embeds `userId`, `role`, and `tenantId` in the JWT payload, enabling automatic downstream tenant binding without manual client headers.
-- **Fail-Safe Verification**: Automatically catches `TokenExpiredError` or signature tampering and throws designated `UnauthorizedError` instances handled by the global error middleware.
-
-### 9. Authentication Guard Middleware (`src/shared/middleware/auth.middleware.ts`)
-
-- **Bearer Token Extraction**: Extracts and validates the `Authorization: Bearer <token>` header, rejecting missing or malformed tokens with standard `UnauthorizedError` (HTTP 401).
-- **Strong Request Context Injection**: Verifies token validity with `JwtUtil` and injects `req.user` (`userId`, `role`, `tenantId`) into the globally typed Express request context.
-- **Automatic Multi-Tenant Binding**: If the authenticated user's JWT payload contains a `tenantId`, it automatically binds `req.tenantId` and sets the `x-tenant-id` response header, relieving frontend clients from manually injecting tenant headers on authenticated requests.
-
-### 10. Role-Based Access Control (RBAC) Guard (`src/shared/middleware/rbac.middleware.ts`)
-
-- **Declarative Route Protection**: Higher-order middleware `authorize(...allowedRoles)` guarding endpoints based on authenticated caller roles (e.g. `authorize(USER_ROLES.ADMIN)`).
-- **Access Enforcement**: Rejects unauthenticated callers with HTTP 401 `UnauthorizedError` and unauthorized roles with HTTP 403 `ForbiddenError`.
-
-### 11. Authentication Domain Service (`src/modules/auth/auth.service.ts`)
-
-- **User Registration & Token Issuance**: Delegates account creation to `usersService`, hashes generated refresh token, and saves hash to MongoDB.
-- **Timing-Safe Login Verification**: Employs constant-time `bcryptjs` password comparison, avoiding user enumeration vectors.
-- **Cryptographic Token Rotation**: Rotates both Access & Refresh tokens on each refresh call, automatically revoking compromised sessions if token reuse is detected.
-- **Secure Logout**: Invalidates server-side refresh tokens by unsetting stored hash.
-
-### 12. Authentication Controller & httpOnly Cookie Strategy (`src/modules/auth/auth.controller.ts`)
-
-- **XSS-Resistant Cookie Management**: Issues `accessToken` and `refreshToken` in `httpOnly, secure, sameSite` cookies, completely isolating tokens from client-side JavaScript access.
-- **Dual Client Transport**: Returns tokens in JSON body for mobile apps/Postman while setting cookies for web browsers.
-- **Endpoint Operations**:
-  - `register`: Creates account, sets session cookies, returns HTTP 201.
-  - `login`: Validates credentials, sets session cookies, returns HTTP 200.
-  - `refreshToken`: Reads from cookie or body, executes cryptographic rotation, updates cookies.
-  - `logout`: Unsets DB session and clears browser cookies.
-  - `getMe`: Resolves authenticated profile for the current session.
-
-### 13. Authentication Routes (`src/modules/auth/auth.routes.ts`)
-
-- **Unified Auth Gateway**: Mounted at `/api/v1/auth` with strict validation and security guards:
-  - `POST /api/v1/auth/register`: Validated with `registerUserSchema` -> `AuthController.register`.
-  - `POST /api/v1/auth/login`: Validated with `loginUserSchema` -> `AuthController.login`.
-  - `POST /api/v1/auth/refresh`: Reads cookie or payload -> `AuthController.refreshToken`.
-  - `POST /api/v1/auth/logout`: Clears session cookies -> `AuthController.logout`.
-  - `GET /api/v1/auth/me`: Protected by `authenticate` guard -> `AuthController.getMe`.
-
-### 14. Redis Connection & Health Monitoring (`src/infrastructure/cache/redis/connection.ts`)
-
-- **Resilient Redis Client**: Built with `ioredis` featuring an automatic reconnection backoff strategy (`retryStrategy`), lazy connection initialization, and real-time lifecycle event logging (`connect`, `ready`, `error`, `close`).
-- **Graceful Lifecycle Management**: Provides `getRedisClient()`, `connectRedis()`, and `disconnectRedis()` for orderly startup and graceful process termination.
-- **Deep Health Probe**: Exports `isRedisConnected()`, seamlessly integrated into `/healthz` probe to report live service health alongside MongoDB.
+Detailed project milestones, checklist items, and architectural requirements are tracked in [PRD.md](file:///Users/manjeetyadav/Desktop/Backend/PRD.md).
