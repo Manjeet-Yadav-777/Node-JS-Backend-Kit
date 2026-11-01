@@ -39,6 +39,12 @@ export function getRedisClient(): Redis {
     });
   }
 
+  if (redisClient.status === 'wait') {
+    void redisClient.connect().catch((error) => {
+      logger.error({ error }, 'Redis connection initiation error');
+    });
+  }
+
   return redisClient;
 }
 

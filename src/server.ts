@@ -1,6 +1,12 @@
 import { createApp } from './app';
 import { appConfig, logger } from './config';
-import { connectMongoDB, disconnectMongoDB, connectRedis, disconnectRedis } from './infrastructure';
+import {
+  connectMongoDB,
+  disconnectMongoDB,
+  connectRedis,
+  disconnectRedis,
+  closeAllBullMQConnections,
+} from './infrastructure';
 
 async function bootstrap(): Promise<void> {
   const app = createApp();
@@ -33,6 +39,7 @@ async function bootstrap(): Promise<void> {
 
       await disconnectMongoDB();
       await disconnectRedis();
+      await closeAllBullMQConnections();
       process.exit(err ? 1 : 0);
     });
 
