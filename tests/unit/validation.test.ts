@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import express, { Request, Response } from 'express';
 import request from 'supertest';
 import { z } from 'zod';
-import { validateRequest } from '../../src/shared/middleware/validation.middleware';
-import { errorMiddleware } from '../../src/shared/middleware/error.middleware';
+import { validateRequest, errorMiddleware } from '../../src/shared';
 import { ApiResponse } from '../../src/core';
 
 describe('Validation Middleware', () => {

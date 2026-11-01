@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { AuthController } from '../../../src/modules/auth/auth.controller';
-import { authService } from '../../../src/modules/auth/auth.service';
-import { usersService } from '../../../src/modules/users/users.service';
-import { IUser } from '../../../src/modules/users/users.model';
+import { AuthController, authService } from '../../../src/modules/auth';
+import { usersService, IUser } from '../../../src/modules/users';
 import { Types } from 'mongoose';
 
 describe('AuthController', () => {

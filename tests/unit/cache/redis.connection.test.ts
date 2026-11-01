@@ -32,13 +32,13 @@ describe('Redis Connection', () => {
   });
 
   afterEach(async () => {
-    const { disconnectRedis } = await import('../../../src/infrastructure/cache/redis/connection');
+    const { disconnectRedis } = await import('../../../src/infrastructure');
     await disconnectRedis();
     vi.resetModules();
   });
 
   it('should create and return a singleton Redis instance', async () => {
-    const { getRedisClient } = await import('../../../src/infrastructure/cache/redis/connection');
+    const { getRedisClient } = await import('../../../src/infrastructure');
     const client1 = getRedisClient();
     const client2 = getRedisClient();
 
@@ -47,8 +47,7 @@ describe('Redis Connection', () => {
   });
 
   it('should establish connection when status is wait', async () => {
-    const { connectRedis, isRedisConnected } =
-      await import('../../../src/infrastructure/cache/redis/connection');
+    const { connectRedis, isRedisConnected } = await import('../../../src/infrastructure');
 
     expect(isRedisConnected()).toBe(false);
     await connectRedis();
@@ -59,7 +58,7 @@ describe('Redis Connection', () => {
 
   it('should handle disconnect and reset internal state', async () => {
     const { connectRedis, disconnectRedis, isRedisConnected } =
-      await import('../../../src/infrastructure/cache/redis/connection');
+      await import('../../../src/infrastructure');
 
     await connectRedis();
     expect(isRedisConnected()).toBe(true);
@@ -70,8 +69,7 @@ describe('Redis Connection', () => {
   });
 
   it('should update connection state on error and close events', async () => {
-    const { connectRedis, isRedisConnected } =
-      await import('../../../src/infrastructure/cache/redis/connection');
+    const { connectRedis, isRedisConnected } = await import('../../../src/infrastructure');
 
     await connectRedis();
     expect(isRedisConnected()).toBe(true);
@@ -89,7 +87,7 @@ describe('Redis Connection', () => {
 
   it('should throw when connect fails', async () => {
     mockInstance.connect = vi.fn().mockRejectedValue(new Error('Redis connection refused'));
-    const { connectRedis } = await import('../../../src/infrastructure/cache/redis/connection');
+    const { connectRedis } = await import('../../../src/infrastructure');
 
     await expect(connectRedis()).rejects.toThrow('Redis connection refused');
   });

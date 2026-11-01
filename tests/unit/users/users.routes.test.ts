@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../src/app';
-import { usersService } from '../../../src/modules/users/users.service';
-import { IUser } from '../../../src/modules/users/users.model';
+import { usersService, IUser } from '../../../src/modules/users';
 import { Types } from 'mongoose';
 
 describe('Users Routes End-to-End Flow', () => {

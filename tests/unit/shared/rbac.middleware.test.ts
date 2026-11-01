@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { authorize } from '../../../src/shared/middleware/rbac.middleware';
+import { authorize } from '../../../src/shared';
 import { ForbiddenError, UnauthorizedError, USER_ROLES } from '../../../src/core';
 
 describe('RBAC Middleware (authorize)', () => {

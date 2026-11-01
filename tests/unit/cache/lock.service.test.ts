@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LockService } from '../../../src/infrastructure/cache/redis/lock.service';
+import { LockService } from '../../../src/infrastructure';
 import { ConflictError } from '../../../src/core';
 
 const mockRedisClient = {

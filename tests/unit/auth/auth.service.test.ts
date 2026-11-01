@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
-import { authService } from '../../../src/modules/auth/auth.service';
-import { usersService } from '../../../src/modules/users/users.service';
-import { UserModel, IUser } from '../../../src/modules/users/users.model';
+import { authService } from '../../../src/modules/auth';
+import { usersService, UserModel, IUser } from '../../../src/modules/users';
 import { JwtUtil, UnauthorizedError } from '../../../src/core';
 
 describe('AuthService', () => {

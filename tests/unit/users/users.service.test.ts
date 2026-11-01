@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
-import { usersService } from '../../../src/modules/users/users.service';
-import { UserModel } from '../../../src/modules/users/users.model';
+import { usersService, UserModel } from '../../../src/modules/users';
 import { ConflictError, NotFoundError, BadRequestError } from '../../../src/core';
 
 describe('UsersService', () => {

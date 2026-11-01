@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { UsersController } from '../../../src/modules/users/users.controller';
-import { usersService } from '../../../src/modules/users/users.service';
-import { IUser } from '../../../src/modules/users/users.model';
+import { UsersController, usersService, IUser } from '../../../src/modules/users';
 import { Types } from 'mongoose';
 
 describe('UsersController', () => {

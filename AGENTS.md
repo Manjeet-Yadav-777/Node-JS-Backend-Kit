@@ -18,7 +18,12 @@
    - Add comments only where complex business logic, security decisions, or non-obvious workarounds exist.
    - All code comments must be short, clear, and written in English.
 10. **Strict Code Reuse (DRY):** Always inspect existing files, utilities, schemas, and helpers before creating new ones. Never duplicate functionality.
-11. **Barrel Export Pattern (`index.ts`):** Every module, subfolder, and utility directory must maintain an `index.ts` file exporting public functions, classes, and types.
+11. **Barrel Export and Import Pattern (`index.ts`):**
+
+- Every module, subfolder, and utility directory must maintain an `index.ts` file exporting public functions, classes, and types.
+- Always consume exports from the top-level barrel file (e.g., `src/core`, `src/infrastructure`, `src/config`, `src/shared`, or module barrels like `src/modules/users` / `../users`).
+- Deep imports into internal files (e.g., `infrastructure/cache/redis/lock.service` or `modules/users/users.service`) are strictly prohibited across modules and test suites, except where strictly necessary to prevent circular dependencies within the same module.
+
 12. **Language Policy:**
 
 - All code, files, documentation, commit messages, and comments must be strictly in English.

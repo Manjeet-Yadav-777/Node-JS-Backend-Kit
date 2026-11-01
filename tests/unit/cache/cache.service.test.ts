@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Readable } from 'stream';
-import { CacheService } from '../../../src/infrastructure/cache/redis/cache.service';
+import { CacheService } from '../../../src/infrastructure';
 
 const mockRedisClient = {
   get: vi.fn(),

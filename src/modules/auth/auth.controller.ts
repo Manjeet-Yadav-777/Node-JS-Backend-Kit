@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
-import { usersService } from '../users/users.service';
-import { RegisterUserDto, LoginUserDto } from '../users/users.validation';
+import { usersService, RegisterUserDto, LoginUserDto } from '../users';
 import { ApiResponse, UnauthorizedError } from '../../core';
 import { env } from '../../config';
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Request, Response, NextFunction } from 'express';
-import { authenticate } from '../../../src/shared/middleware/auth.middleware';
+import { authenticate } from '../../../src/shared';
 import { JwtUtil, UnauthorizedError } from '../../../src/core';
 
 describe('Auth Middleware (authenticate)', () => {

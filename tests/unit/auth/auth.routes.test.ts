@@ -1,10 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../../../src/app';
-import { authService } from '../../../src/modules/auth/auth.service';
-import { usersService } from '../../../src/modules/users/users.service';
+import { authService } from '../../../src/modules/auth';
+import { usersService, IUser } from '../../../src/modules/users';
 import { JwtUtil } from '../../../src/core';
-import { IUser } from '../../../src/modules/users/users.model';
 import { Types } from 'mongoose';
 
 describe('Auth Routes End-to-End Flow', () => {
