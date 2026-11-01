@@ -452,7 +452,53 @@ Call `GET /healthz` to inspect real-time service health:
 
 ---
 
-### 3.6 Step-by-Step Tutorial: How to Add a New Domain Module
+### 3.6 Background Job Queues & Producers (BullMQ)
+
+The kit provides an enterprise-ready background job producer via `queueManager`. It maintains dedicated Redis connections (with `maxRetriesPerRequest: null` required for BullMQ blocking commands), automated exponential backoff retries, and job retention policies.
+
+#### Adding a Single Background Job
+
+```typescript
+import { queueManager } from '../infrastructure';
+
+// Adds job with default 3 retry attempts, exponential backoff, and automatic cleanup:
+await queueManager.addJob('email-queue', 'send-welcome-email', {
+  to: 'user@example.com',
+  template: 'welcome',
+  userId: 'user_123',
+});
+```
+
+#### Delayed and Prioritized Jobs
+
+```typescript
+// Add a job that executes after 60 seconds with elevated priority (1 = highest):
+await queueManager.addJob(
+  'notification-queue',
+  'send-reminder',
+  { userId: 'user_123', reminderText: 'Your subscription is expiring soon' },
+  {
+    delay: 60 * 1000, // 60 seconds
+    priority: 1, // High priority
+    attempts: 5, // Override retry count
+  },
+);
+```
+
+#### High-Throughput Batch Publishing
+
+```typescript
+// Enqueue hundreds or thousands of jobs in a single Redis atomic pipeline:
+await queueManager.addBulkJobs('email-queue', [
+  { name: 'send-digest', data: { to: 'alex@example.com', digestId: 'd1' } },
+  { name: 'send-digest', data: { to: 'sam@example.com', digestId: 'd1' } },
+  { name: 'send-digest', data: { to: 'taylor@example.com', digestId: 'd1' } },
+]);
+```
+
+---
+
+### 3.7 Step-by-Step Tutorial: How to Add a New Domain Module
 
 Follow these steps to create a new module (for example: `orders`):
 

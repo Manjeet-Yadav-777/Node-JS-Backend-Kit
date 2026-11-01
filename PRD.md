@@ -279,14 +279,14 @@ backend/
 
 ### G. Background Jobs – BullMQ
 
-- [ ] Queue manager
-- [ ] Reusable job producer
+- [x] Queue manager
+- [x] Reusable job producer
 - [ ] Worker manager
 - [ ] Job processors
-- [ ] Retry with exponential backoff
-- [ ] Delayed jobs
+- [x] Retry with exponential backoff
+- [x] Delayed jobs
 - [ ] Scheduled jobs
-- [ ] Job priorities
+- [x] Job priorities
 - [ ] Job concurrency control
 - [ ] Failed job handling
 - [ ] Job monitoring
