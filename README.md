@@ -201,3 +201,9 @@ Every `git commit` automatically triggers:
   - `POST /api/v1/auth/refresh`: Reads cookie or payload -> `AuthController.refreshToken`.
   - `POST /api/v1/auth/logout`: Clears session cookies -> `AuthController.logout`.
   - `GET /api/v1/auth/me`: Protected by `authenticate` guard -> `AuthController.getMe`.
+
+### 14. Redis Connection & Health Monitoring (`src/infrastructure/cache/redis/connection.ts`)
+
+- **Resilient Redis Client**: Built with `ioredis` featuring an automatic reconnection backoff strategy (`retryStrategy`), lazy connection initialization, and real-time lifecycle event logging (`connect`, `ready`, `error`, `close`).
+- **Graceful Lifecycle Management**: Provides `getRedisClient()`, `connectRedis()`, and `disconnectRedis()` for orderly startup and graceful process termination.
+- **Deep Health Probe**: Exports `isRedisConnected()`, seamlessly integrated into `/healthz` probe to report live service health alongside MongoDB.
