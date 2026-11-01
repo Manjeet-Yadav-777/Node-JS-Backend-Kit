@@ -250,11 +250,11 @@ backend/
 ### E. Redis and Caching
 
 - [x] Redis connection manager
-- [ ] Reusable cache service
-- [ ] Get / set / delete operations
-- [ ] TTL management
-- [ ] Cache-aside strategy
-- [ ] Cache invalidation
+- [x] Reusable cache service
+- [x] Get / set / delete operations
+- [x] TTL management
+- [x] Cache-aside strategy
+- [x] Cache invalidation
 - [ ] Cache key conventions
 - [ ] Distributed locks
 - [ ] Atomic counters

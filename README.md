@@ -296,23 +296,50 @@ export class DocumentService {
 
 ### 3.5 Redis Cache & Connection Management
 
-The starter kit uses `ioredis` with automatic exponential backoff reconnection strategies and graceful process termination.
+The starter kit provides a high-level, fail-open `cacheService` alongside the direct `ioredis` client with automatic exponential backoff reconnection and graceful shutdown.
 
-#### Accessing Redis Client
+#### Using Type-Safe Cache-Aside (`cacheService`)
+
+```typescript
+import { cacheService } from '../infrastructure';
+
+export class ProductService {
+  async getProductById(id: string): Promise<Product> {
+    // 1. Automatic cache-aside with remember():
+    // If cached in Redis, returns immediately.
+    // Otherwise runs the factory function, sets TTL in seconds, and returns fresh data:
+    return cacheService.remember(`product:${id}`, 3600, async () => {
+      const product = await ProductModel.findById(id).lean();
+      if (!product) {
+        throw new NotFoundError(`Product ${id} not found`);
+      }
+      return product;
+    });
+  }
+
+  async updateProduct(id: string, updateDto: UpdateProductDto): Promise<Product> {
+    const updated = await ProductModel.findByIdAndUpdate(id, updateDto, { new: true });
+
+    // 2. Invalidate single or multiple keys:
+    await cacheService.del(`product:${id}`);
+
+    // 3. Invalidate an entire pattern or category:
+    await cacheService.deleteByPattern('products:list:*');
+
+    return updated;
+  }
+}
+```
+
+#### Raw Client & Health Probes
 
 ```typescript
 import { getRedisClient, isRedisConnected } from '../infrastructure';
 
-// 1. Check if Redis is operational:
+// Direct ioredis client access for atomic counters, pipelines, or locks:
 if (isRedisConnected()) {
   const client = getRedisClient();
-  await client.set('cache:user:123', JSON.stringify(userData), 'EX', 3600);
-}
-
-// 2. Retrieve cached item:
-const cached = await getRedisClient().get('cache:user:123');
-if (cached) {
-  return JSON.parse(cached);
+  await client.incr('analytics:pageviews');
 }
 ```
 
