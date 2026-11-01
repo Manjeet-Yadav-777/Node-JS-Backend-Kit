@@ -333,25 +333,56 @@ export class ProductService {
 
 #### Distributed Locking (`lockService`)
 
-Prevent race conditions and double-executions across cluster instances (e.g., checkout payments, inventory deduction, cron tasks):
+A distributed lock guarantees that only **one server instance** across your entire cluster can execute a critical section of code at any given time.
+
+##### Why is it needed?
+
+In production, your backend runs across multiple Docker containers or cloud instances. If two identical requests hit two different server instances at the exact same millisecond (e.g. user double-clicking "Pay Now" or two users booking the last concert seat), standard Node.js in-memory locks cannot prevent race conditions. Redis acts as a centralized coordinator.
+
+##### When to use it:
+
+- **Payment Processing**: Prevent duplicate charges when users double-click or network retries occur.
+- **Inventory / Stock Deduction**: Prevent overselling limited items in high-traffic flash sales.
+- **Multi-Instance Cron Tasks**: Ensure a scheduled task runs exactly once, even when 5 server instances are running.
+- **Financial Balance & Wallet Transfers**: Prevent concurrent balance deductions (double-spending attacks).
+- **Seat / Booking Reservations**: Lock a specific seat ID while the user completes payment.
+
+##### When NOT to use it:
+
+- Normal `GET` or read-only requests.
+- Operations already protected by MongoDB unique indexes (e.g. registering with a unique email).
+- High-frequency low-risk telemetry/analytics (use atomic counters `client.incr` instead).
+
+##### Code Example:
 
 ```typescript
 import { lockService } from '../infrastructure';
 
 export class OrderService {
-  async processPayment(orderId: string) {
+  async processPayment(orderId: string, amount: number) {
     // Automatically acquires lock, executes task, and safely releases lock via Lua script:
     return lockService.withLock(
       `order:payment:${orderId}`,
       async () => {
-        // Critical section: guaranteed single-execution across all server instances
-        return paymentGateway.charge(orderId);
+        // Critical Section: Guaranteed to run exclusively across the entire cluster
+        return paymentGateway.charge(orderId, amount);
       },
-      { ttlMs: 5000, retries: 3, retryDelayMs: 150 },
+      {
+        ttlMs: 5000, // Lock automatically expires after 5s if server crashes
+        retries: 3, // Retry up to 3 times if another instance currently holds the lock
+        retryDelayMs: 150, // Wait 150ms between retry attempts
+      },
     );
   }
 }
 ```
+
+##### How It Works Internally:
+
+1. **Atomic Acquisition**: Uses Redis `SET lock:<key> <token> PX <ttl> NX` ("NX" = only set if key does not exist).
+2. **Cryptographic Token Ownership**: Generates a unique UUID token per acquisition.
+3. **Safe Lua Release**: Uses an atomic Lua script to verify token identity before deleting. This prevents a worker from deleting another worker's lock if its own execution exceeded the TTL.
+4. **Fail-Safe Cleanup**: The `withLock` wrapper guarantees release in a `finally` block even if the task throws an unhandled error.
 
 #### Raw Client & Health Probes
 
