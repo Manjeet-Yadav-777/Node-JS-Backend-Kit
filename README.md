@@ -331,12 +331,34 @@ export class ProductService {
 }
 ```
 
+#### Distributed Locking (`lockService`)
+
+Prevent race conditions and double-executions across cluster instances (e.g., checkout payments, inventory deduction, cron tasks):
+
+```typescript
+import { lockService } from '../infrastructure';
+
+export class OrderService {
+  async processPayment(orderId: string) {
+    // Automatically acquires lock, executes task, and safely releases lock via Lua script:
+    return lockService.withLock(
+      `order:payment:${orderId}`,
+      async () => {
+        // Critical section: guaranteed single-execution across all server instances
+        return paymentGateway.charge(orderId);
+      },
+      { ttlMs: 5000, retries: 3, retryDelayMs: 150 },
+    );
+  }
+}
+```
+
 #### Raw Client & Health Probes
 
 ```typescript
 import { getRedisClient, isRedisConnected } from '../infrastructure';
 
-// Direct ioredis client access for atomic counters, pipelines, or locks:
+// Direct ioredis client access for atomic counters, pipelines, or raw commands:
 if (isRedisConnected()) {
   const client = getRedisClient();
   await client.incr('analytics:pageviews');

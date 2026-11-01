@@ -256,7 +256,7 @@ backend/
 - [x] Cache-aside strategy
 - [x] Cache invalidation
 - [ ] Cache key conventions
-- [ ] Distributed locks
+- [x] Distributed locks
 - [ ] Atomic counters
 - [ ] Redis-based rate limiter
 - [x] Redis health checks
