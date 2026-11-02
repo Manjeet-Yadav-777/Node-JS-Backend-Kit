@@ -7,6 +7,7 @@ import {
   disconnectRedis,
   closeAllBullMQConnections,
   queueManager,
+  workerManager,
 } from './infrastructure';
 
 async function bootstrap(): Promise<void> {
@@ -40,6 +41,7 @@ async function bootstrap(): Promise<void> {
 
       await disconnectMongoDB();
       await disconnectRedis();
+      await workerManager.closeAll();
       await queueManager.closeAll();
       await closeAllBullMQConnections();
       process.exit(err ? 1 : 0);

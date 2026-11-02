@@ -281,15 +281,15 @@ backend/
 
 - [x] Queue manager
 - [x] Reusable job producer
-- [ ] Worker manager
+- [x] Worker manager
 - [ ] Job processors
 - [x] Retry with exponential backoff
 - [x] Delayed jobs
 - [ ] Scheduled jobs
 - [x] Job priorities
-- [ ] Job concurrency control
-- [ ] Failed job handling
-- [ ] Job monitoring
+- [x] Job concurrency control
+- [x] Failed job handling
+- [x] Job monitoring
 - [ ] Idempotent jobs
 
 ### H. Email, SMS and Notifications

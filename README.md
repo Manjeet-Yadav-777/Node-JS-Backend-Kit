@@ -496,6 +496,29 @@ await queueManager.addBulkJobs('email-queue', [
 ]);
 ```
 
+#### Consuming Jobs with `workerManager`
+
+Workers process background jobs concurrently with automated lifecycle event logging (`completed`, `failed`, `stalled`, `error`):
+
+```typescript
+import { workerManager } from '../infrastructure';
+
+// Register a consumer worker for the 'email-queue' with concurrency of 5:
+workerManager.registerWorker(
+  'email-queue',
+  async (job) => {
+    // Pure data access from job.data:
+    const { to, template, userId } = job.data;
+    await sendEmail({ to, template, userId });
+    return { delivered: true, sentAt: new Date() };
+  },
+  { concurrency: 5 },
+);
+```
+
+> [!NOTE]
+> All workers registered via `workerManager` are automatically stopped and drained during graceful shutdown before HTTP server and database connections terminate.
+
 ---
 
 ### 3.7 Step-by-Step Tutorial: How to Add a New Domain Module
