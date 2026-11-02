@@ -567,9 +567,10 @@ Email templates are decoupled from queue producers and HTTP controllers. Rather 
 
 - **Welcome Email** (`renderWelcomeEmail`): Clean onboarding card with dynamic dashboard CTA button and support link.
 - **Password Reset Email** (`renderPasswordResetEmail`): Security-styled card featuring direct password reset CTA, raw token fallback, expiration warning (15m default), and fraud contact notice.
+- **OTP Verification Email** (`renderOtpEmail`): High-contrast card with formatted verification code badge, expiry notice, security alert, and custom purpose context.
 
 ```typescript
-import { renderWelcomeEmail, renderPasswordResetEmail } from '../infrastructure';
+import { renderWelcomeEmail, renderPasswordResetEmail, renderOtpEmail } from '../infrastructure';
 
 // 1. Render Welcome Email HTML:
 const welcomeHtml = renderWelcomeEmail({
@@ -582,6 +583,14 @@ const resetHtml = renderPasswordResetEmail({
   resetToken: 'token_123',
   resetUrl: 'https://myapp.com/reset-password?token=token_123',
   expiresInMinutes: 15,
+});
+
+// 3. Render OTP Verification Email HTML:
+const otpHtml = renderOtpEmail({
+  otp: '849201',
+  name: 'Alex',
+  purpose: 'two-factor authentication',
+  expiresInMinutes: 10,
 });
 ```
 

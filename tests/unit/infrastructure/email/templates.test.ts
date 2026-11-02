@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { renderWelcomeEmail, renderPasswordResetEmail } from '../../../../src/infrastructure';
+import {
+  renderWelcomeEmail,
+  renderPasswordResetEmail,
+  renderOtpEmail,
+} from '../../../../src/infrastructure';
 
 describe('Email Templates', () => {
   describe('renderWelcomeEmail', () => {
@@ -48,6 +52,35 @@ describe('Email Templates', () => {
       expect(html).toContain('https://app.example.com/reset?code=raw_token_xyz');
       expect(html).toContain('30 minutes');
       expect(html).toContain('security@example.com');
+    });
+  });
+
+  describe('renderOtpEmail', () => {
+    it('should generate valid responsive HTML with OTP and default options', () => {
+      const html = renderOtpEmail({ otp: '482910' });
+
+      expect(html).toContain('<!DOCTYPE html>');
+      expect(html).toContain('Account Verification');
+      expect(html).toContain('482910');
+      expect(html).toContain('10 minutes');
+      expect(html).toContain('verification');
+      expect(html).toContain('support@example.com');
+    });
+
+    it('should allow custom recipient name, purpose, expiration, and support email', () => {
+      const html = renderOtpEmail({
+        otp: '918234',
+        name: 'Jordan',
+        purpose: 'two-factor authentication',
+        expiresInMinutes: 5,
+        supportEmail: 'auth-help@example.com',
+      });
+
+      expect(html).toContain('Hi <strong>Jordan</strong>');
+      expect(html).toContain('918234');
+      expect(html).toContain('5 minutes');
+      expect(html).toContain('two-factor authentication');
+      expect(html).toContain('auth-help@example.com');
     });
   });
 });

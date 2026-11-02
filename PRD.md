@@ -299,7 +299,7 @@ backend/
 - [x] Reusable email templates
 - [x] Welcome email
 - [x] Password reset email
-- [ ] OTP email
+- [x] OTP email
 - [ ] SMS provider abstraction
 - [ ] Push notification service
 - [ ] In-app notification system
