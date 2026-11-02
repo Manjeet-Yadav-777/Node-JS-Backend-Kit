@@ -309,7 +309,7 @@ backend/
 
 ### I. Files, Images and PDFs
 
-- [ ] Storage provider abstraction
+- [x] Storage provider abstraction
 - [ ] Local storage adapter
 - [ ] S3 / Cloudflare R2 adapter
 - [ ] File upload service

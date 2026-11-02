@@ -641,7 +641,27 @@ EMAIL_FROM="MyApp Support <support@myapp.com>"
 
 ---
 
-### 3.7 Step-by-Step Tutorial: How to Add a New Domain Module
+### 3.7 Storage Provider Abstraction (`src/infrastructure/storage/`)
+
+All file persistence follows the Provider Adapter pattern (`IStorageProvider`), ensuring that file upload logic in controllers and services remains completely decoupled from physical storage providers (Local disk, AWS S3, Cloudflare R2, Google Cloud Storage, or MinIO).
+
+#### Interface Contract (`IStorageProvider`)
+
+```typescript
+import { IStorageProvider, StorageFile, UploadResult } from '../infrastructure';
+
+export interface IStorageProvider {
+  upload(file: StorageFile, options?: UploadOptions): Promise<UploadResult>;
+  download(key: string): Promise<Buffer>;
+  delete(key: string): Promise<void>;
+  getSignedUrl(key: string, expiresInSeconds?: number): Promise<string>;
+  exists(key: string): Promise<boolean>;
+}
+```
+
+---
+
+### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module
 
 Follow these steps to create a new module (for example: `orders`):
 
