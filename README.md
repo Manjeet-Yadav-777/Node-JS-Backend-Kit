@@ -648,7 +648,7 @@ All file persistence follows the Provider Adapter pattern (`IStorageProvider`), 
 #### Interface Contract (`IStorageProvider`)
 
 ```typescript
-import { IStorageProvider, StorageFile, UploadResult } from '../infrastructure';
+import { IStorageProvider, StorageFile, UploadOptions, UploadResult } from '../infrastructure';
 
 export interface IStorageProvider {
   upload(file: StorageFile, options?: UploadOptions): Promise<UploadResult>;
@@ -657,6 +657,37 @@ export interface IStorageProvider {
   getSignedUrl(key: string, expiresInSeconds?: number): Promise<string>;
   exists(key: string): Promise<boolean>;
 }
+```
+
+#### Local Filesystem Adapter (`src/infrastructure/storage/local.storage.ts`)
+
+The `LocalStorageAdapter` writes uploaded files directly to disk while preventing path traversal attacks (`../` traversal sanitization).
+
+```typescript
+import { localStorageAdapter } from '../infrastructure';
+
+// 1. Upload a file buffer:
+const result = await localStorageAdapter.upload(
+  {
+    originalName: 'report.pdf',
+    mimeType: 'application/pdf',
+    size: fileBuffer.length,
+    buffer: fileBuffer,
+  },
+  { prefix: 'invoices' },
+);
+
+console.log('Saved to key:', result.key);
+console.log('Accessible URL:', result.url);
+
+// 2. Check if a file exists:
+const exists = await localStorageAdapter.exists(result.key);
+
+// 3. Download file buffer:
+const downloadedBuffer = await localStorageAdapter.download(result.key);
+
+// 4. Delete file from local disk:
+await localStorageAdapter.delete(result.key);
 ```
 
 ---

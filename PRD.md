@@ -310,7 +310,7 @@ backend/
 ### I. Files, Images and PDFs
 
 - [x] Storage provider abstraction
-- [ ] Local storage adapter
+- [x] Local storage adapter
 - [ ] S3 / Cloudflare R2 adapter
 - [ ] File upload service
 - [ ] File validation and size limits
