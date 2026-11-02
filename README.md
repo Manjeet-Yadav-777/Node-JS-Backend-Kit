@@ -519,6 +519,34 @@ workerManager.registerWorker(
 > [!NOTE]
 > All workers registered via `workerManager` are automatically stopped and drained during graceful shutdown before HTTP server and database connections terminate.
 
+#### Reusable Domain Job Processors (`src/jobs/`)
+
+The starter kit organizes queue consumers into dedicated job modules in `src/jobs/` with strongly-typed payloads and helper dispatchers:
+
+```typescript
+import { enqueueWelcomeEmail, enqueuePasswordResetEmail, startEmailWorker } from '../jobs';
+
+// 1. Dispatching a typed welcome email:
+await enqueueWelcomeEmail({
+  to: 'user@example.com',
+  name: 'Alex',
+  userId: 'usr_123',
+});
+
+// 2. Dispatching a password reset email with priority override:
+await enqueuePasswordResetEmail(
+  {
+    to: 'user@example.com',
+    resetToken: 'secure_token_xyz',
+    expiresInMinutes: 15,
+  },
+  { priority: 1 },
+);
+
+// 3. Bootstrapping background email worker:
+startEmailWorker(5); // Concurrency of 5 workers
+```
+
 ---
 
 ### 3.7 Step-by-Step Tutorial: How to Add a New Domain Module

@@ -282,7 +282,7 @@ backend/
 - [x] Queue manager
 - [x] Reusable job producer
 - [x] Worker manager
-- [ ] Job processors
+- [x] Job processors
 - [x] Retry with exponential backoff
 - [x] Delayed jobs
 - [ ] Scheduled jobs
