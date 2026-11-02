@@ -872,6 +872,54 @@ router.get('/invoices/:id/download', (req, res) => {
 });
 ```
 
+#### Custom HTML-to-PDF Generator (`src/infrastructure/storage/html-pdf.generator.ts`)
+
+For pixel-perfect, designer-crafted documents styled with HTML, CSS, Flexbox, Grid, or custom fonts, the `htmlPdfGenerator` uses headless Chromium to render and print custom templates directly to PDF:
+
+```typescript
+import { htmlPdfGenerator, localStorageAdapter } from '../infrastructure';
+
+const customHtml = `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <style>
+        body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+        .title { font-size: 28px; font-weight: 800; color: #4f46e5; margin: 0; }
+        .badge { background: #dcfce7; color: #166534; padding: 6px 12px; border-radius: 9999px; font-weight: 600; font-size: 14px; }
+        .invoice-card { background: #f8fafc; border-radius: 8px; padding: 24px; margin-top: 30px; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1 class="title">INVOICE #9081</h1>
+        <span class="badge">PAID</span>
+      </div>
+      <div class="invoice-card">
+        <p>Billed to: <strong>Acme Global Corp</strong></p>
+        <p>Amount: <strong>$1,250.00</strong></p>
+      </div>
+    </body>
+  </html>
+`;
+
+// Render custom HTML to PDF Buffer:
+const pdfBuffer = await htmlPdfGenerator.generateFromHtml(customHtml, {
+  format: 'A4',
+  printBackground: true,
+  margin: { top: '30px', bottom: '30px', left: '20px', right: '20px' },
+});
+
+// Save to storage or send via email:
+await localStorageAdapter.upload({
+  originalName: 'custom-invoice.pdf',
+  mimeType: 'application/pdf',
+  size: pdfBuffer.length,
+  buffer: pdfBuffer,
+});
+```
+
 ---
 
 ### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module
