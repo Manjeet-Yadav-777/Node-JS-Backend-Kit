@@ -538,7 +538,12 @@ workerManager.registerWorker(
 The starter kit organizes queue consumers into dedicated job modules in `src/jobs/` with strongly-typed payloads and helper dispatchers:
 
 ```typescript
-import { enqueueWelcomeEmail, enqueuePasswordResetEmail, startEmailWorker } from '../jobs';
+import {
+  enqueueWelcomeEmail,
+  enqueuePasswordResetEmail,
+  enqueueOtpEmail,
+  startEmailWorker,
+} from '../jobs';
 
 // 1. Dispatching a typed welcome email:
 await enqueueWelcomeEmail({
@@ -557,7 +562,16 @@ await enqueuePasswordResetEmail(
   { priority: 1 },
 );
 
-// 3. Bootstrapping background email worker:
+// 3. Dispatching an OTP verification email:
+await enqueueOtpEmail({
+  to: 'user@example.com',
+  otp: '739201',
+  name: 'Alex',
+  purpose: 'login verification',
+  expiresInMinutes: 10,
+});
+
+// 4. Bootstrapping background email worker:
 startEmailWorker(5); // Concurrency of 5 workers
 ```
 

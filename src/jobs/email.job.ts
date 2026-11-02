@@ -4,6 +4,7 @@ import {
   workerManager,
   renderWelcomeEmail,
   renderPasswordResetEmail,
+  renderOtpEmail,
   emailService,
 } from '../infrastructure';
 import { logger } from '../config';
@@ -13,6 +14,7 @@ export const EMAIL_QUEUE_NAME = 'email-queue' as const;
 export const EMAIL_JOB_NAMES = {
   SEND_WELCOME: 'send-welcome',
   SEND_PASSWORD_RESET: 'send-password-reset',
+  SEND_OTP: 'send-otp',
   SEND_GENERIC: 'send-generic',
 } as const;
 
@@ -32,13 +34,22 @@ export interface PasswordResetEmailJobData {
   resetUrl?: string;
 }
 
+export interface OtpEmailJobData {
+  to: string;
+  otp: string;
+  name?: string;
+  purpose?: string;
+  expiresInMinutes?: number;
+}
+
 export interface GenericEmailJobData {
   to: string;
   subject: string;
   content: string;
 }
 
-export type EmailJobData = WelcomeEmailJobData | PasswordResetEmailJobData | GenericEmailJobData;
+export type EmailJobData =
+  WelcomeEmailJobData | PasswordResetEmailJobData | OtpEmailJobData | GenericEmailJobData;
 
 export interface EmailJobResult {
   messageId: string;
@@ -81,6 +92,22 @@ export async function processEmailJob(
       const result = await emailService.sendEmail({
         to: resetData.to,
         subject: 'Reset Your Password',
+        html,
+      });
+      resultMessageId = result.messageId;
+      break;
+    }
+    case EMAIL_JOB_NAMES.SEND_OTP: {
+      const otpData = data as OtpEmailJobData;
+      const html = renderOtpEmail({
+        otp: otpData.otp,
+        name: otpData.name,
+        purpose: otpData.purpose,
+        expiresInMinutes: otpData.expiresInMinutes,
+      });
+      const result = await emailService.sendEmail({
+        to: otpData.to,
+        subject: `Your Verification Code: ${otpData.otp}`,
         html,
       });
       resultMessageId = result.messageId;
@@ -133,6 +160,21 @@ export async function enqueuePasswordResetEmail(
   return queueManager.addJob<PasswordResetEmailJobData>(
     EMAIL_QUEUE_NAME,
     EMAIL_JOB_NAMES.SEND_PASSWORD_RESET,
+    data,
+    opts,
+  );
+}
+
+/**
+ * Enqueues an OTP verification email job.
+ */
+export async function enqueueOtpEmail(
+  data: OtpEmailJobData,
+  opts?: JobsOptions,
+): Promise<Job<OtpEmailJobData>> {
+  return queueManager.addJob<OtpEmailJobData>(
+    EMAIL_QUEUE_NAME,
+    EMAIL_JOB_NAMES.SEND_OTP,
     data,
     opts,
   );

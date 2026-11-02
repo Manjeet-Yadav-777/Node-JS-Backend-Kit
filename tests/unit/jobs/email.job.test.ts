@@ -3,12 +3,14 @@ import {
   processEmailJob,
   enqueueWelcomeEmail,
   enqueuePasswordResetEmail,
+  enqueueOtpEmail,
   enqueueGenericEmail,
   startEmailWorker,
   EMAIL_QUEUE_NAME,
   EMAIL_JOB_NAMES,
   WelcomeEmailJobData,
   PasswordResetEmailJobData,
+  OtpEmailJobData,
   GenericEmailJobData,
 } from '../../../src/jobs';
 import { queueManager, workerManager, emailService } from '../../../src/infrastructure';
@@ -86,9 +88,35 @@ describe('EmailJob', () => {
       );
     });
 
+    it('should process send-otp email job successfully', async () => {
+      const mockJob = {
+        id: 'job_otp_3',
+        name: EMAIL_JOB_NAMES.SEND_OTP,
+        data: {
+          to: 'verify@example.com',
+          otp: '654321',
+          name: 'Sam',
+          purpose: 'two-factor authentication',
+          expiresInMinutes: 10,
+        } as OtpEmailJobData,
+      };
+
+      const result = await processEmailJob(mockJob as never);
+
+      expect(result).toBeDefined();
+      expect(result.messageId).toBe('msg_dispatched_test');
+      expect(result.sentAt).toBeDefined();
+      expect(emailService.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'verify@example.com',
+          subject: 'Your Verification Code: 654321',
+        }),
+      );
+    });
+
     it('should process send-generic email job successfully', async () => {
       const mockJob = {
-        id: 'job_generic_3',
+        id: 'job_generic_4',
         name: EMAIL_JOB_NAMES.SEND_GENERIC,
         data: {
           to: 'admin@example.com',
@@ -182,6 +210,30 @@ describe('EmailJob', () => {
         EMAIL_JOB_NAMES.SEND_PASSWORD_RESET,
         payload,
         undefined,
+      );
+    });
+  });
+
+  describe('enqueueOtpEmail', () => {
+    it('should delegate to queueManager.addJob with OTP payload', async () => {
+      const payload: OtpEmailJobData = {
+        to: 'verify@example.com',
+        otp: '123456',
+        name: 'Alex',
+        purpose: 'account login',
+        expiresInMinutes: 10,
+      };
+      const mockJob = { id: 'job_103', data: payload };
+      vi.mocked(queueManager.addJob).mockResolvedValue(mockJob as never);
+
+      const result = await enqueueOtpEmail(payload, { priority: 1 });
+
+      expect(result).toBe(mockJob);
+      expect(queueManager.addJob).toHaveBeenCalledWith(
+        EMAIL_QUEUE_NAME,
+        EMAIL_JOB_NAMES.SEND_OTP,
+        payload,
+        { priority: 1 },
       );
     });
   });
