@@ -30,6 +30,13 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   SMTP_SECURE: z.coerce.boolean().default(false),
   EMAIL_FROM: z.string().default('Node Backend Kit <noreply@example.com>'),
+
+  AWS_REGION: z.string().default('us-east-1'),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_S3_BUCKET: z.string().default('default-bucket'),
+  AWS_S3_ENDPOINT: z.string().optional(),
+  AWS_S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

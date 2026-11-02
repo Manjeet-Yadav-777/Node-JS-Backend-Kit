@@ -311,7 +311,7 @@ backend/
 
 - [x] Storage provider abstraction
 - [x] Local storage adapter
-- [ ] S3 / Cloudflare R2 adapter
+- [x] S3 / Cloudflare R2 adapter
 - [x] File upload service
 - [x] File validation and size limits
 - [ ] Secure file access
@@ -320,7 +320,7 @@ backend/
 - [ ] Thumbnail generation
 - [ ] PDF generation
 - [ ] PDF download and streaming
-- [ ] Signed URLs
+- [x] Signed URLs
 - [ ] File metadata management
 - [ ] Orphaned file cleanup
 

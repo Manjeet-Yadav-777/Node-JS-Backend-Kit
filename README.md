@@ -744,6 +744,50 @@ router.post(
 export default router;
 ```
 
+#### AWS S3 & Cloudflare R2 Adapter (`src/infrastructure/storage/s3.storage.ts`)
+
+The `S3StorageAdapter` provides pluggable cloud object storage compatible with Amazon AWS S3, Cloudflare R2, MinIO, or LocalStack:
+
+```typescript
+import { s3StorageAdapter } from '../infrastructure';
+
+// 1. Upload to S3 / Cloudflare R2:
+const result = await s3StorageAdapter.upload(
+  {
+    originalName: 'contract.pdf',
+    mimeType: 'application/pdf',
+    size: fileBuffer.length,
+    buffer: fileBuffer,
+  },
+  { prefix: 'contracts' },
+);
+
+console.log('S3 Object URL:', result.url);
+
+// 2. Generate temporary presigned download link (valid for 15 minutes):
+const presignedUrl = await s3StorageAdapter.getSignedUrl(result.key, 900);
+
+// 3. Download object as buffer:
+const fileBuffer = await s3StorageAdapter.download(result.key);
+
+// 4. Delete object from bucket:
+await s3StorageAdapter.delete(result.key);
+```
+
+##### S3 & Cloudflare R2 Environment Variables
+
+```env
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-aws-access-key-id
+AWS_SECRET_ACCESS_KEY=your-aws-secret-access-key
+AWS_S3_BUCKET=my-app-uploads
+# For Cloudflare R2:
+# AWS_S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+# For MinIO / LocalStack:
+# AWS_S3_ENDPOINT=http://localhost:9000
+# AWS_S3_FORCE_PATH_STYLE=true
+```
+
 ---
 
 ### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module
