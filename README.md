@@ -690,6 +690,60 @@ const downloadedBuffer = await localStorageAdapter.download(result.key);
 await localStorageAdapter.delete(result.key);
 ```
 
+#### File Upload Middleware (`src/shared/middleware/upload.middleware.ts`)
+
+The kit includes reusable Multer upload middleware featuring in-memory buffering, strict maximum file size caps, and allowed MIME type restrictions:
+
+```typescript
+import { Router } from 'express';
+import { uploadSingle, uploadMultiple, ALLOWED_IMAGE_TYPES } from '../../shared';
+import { localStorageAdapter } from '../../infrastructure';
+import { ApiResponse } from '../../core';
+
+const router = Router();
+
+// 1. Single file upload (Max 5MB, images only):
+router.post(
+  '/avatar',
+  uploadSingle({
+    fieldName: 'avatar',
+    maxFileSize: 2 * 1024 * 1024, // 2MB
+    allowedMimeTypes: [...ALLOWED_IMAGE_TYPES],
+  }),
+  async (req, res) => {
+    const file = req.file!;
+    const saved = await localStorageAdapter.upload(
+      {
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        buffer: file.buffer,
+      },
+      { prefix: 'avatars' },
+    );
+
+    ApiResponse.success(res, saved, 'Avatar uploaded successfully', 201);
+  },
+);
+
+// 2. Multiple files upload (Max 5 files, 10MB each):
+router.post(
+  '/documents',
+  uploadMultiple({
+    fieldName: 'attachments',
+    maxFiles: 5,
+    maxFileSize: 10 * 1024 * 1024,
+  }),
+  async (req, res) => {
+    const files = req.files as Express.Multer.File[];
+    // Process files array...
+    ApiResponse.success(res, { count: files.length }, 'Files processed successfully');
+  },
+);
+
+export default router;
+```
+
 ---
 
 ### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module

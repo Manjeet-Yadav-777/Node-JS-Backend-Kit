@@ -312,8 +312,8 @@ backend/
 - [x] Storage provider abstraction
 - [x] Local storage adapter
 - [ ] S3 / Cloudflare R2 adapter
-- [ ] File upload service
-- [ ] File validation and size limits
+- [x] File upload service
+- [x] File validation and size limits
 - [ ] Secure file access
 - [ ] Image resizing
 - [ ] Image compression
