@@ -10,6 +10,8 @@ import {
   workerManager,
 } from './infrastructure';
 
+import { startEmailWorker } from './jobs';
+
 async function bootstrap(): Promise<void> {
   const app = createApp();
 
@@ -21,6 +23,7 @@ async function bootstrap(): Promise<void> {
 
   try {
     await connectRedis();
+    startEmailWorker();
   } catch (error) {
     logger.warn({ error }, 'Redis connection initialization failed, continuing in degraded mode');
   }

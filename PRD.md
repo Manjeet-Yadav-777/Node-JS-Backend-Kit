@@ -294,8 +294,8 @@ backend/
 
 ### H. Email, SMS and Notifications
 
-- [ ] Email provider abstraction
-- [ ] SMTP / Resend / SES adapters
+- [x] Email provider abstraction
+- [x] SMTP / Resend / SES adapters
 - [x] Reusable email templates
 - [x] Welcome email
 - [x] Password reset email

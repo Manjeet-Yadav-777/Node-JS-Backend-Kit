@@ -11,7 +11,7 @@ import {
   PasswordResetEmailJobData,
   GenericEmailJobData,
 } from '../../../src/jobs';
-import { queueManager, workerManager } from '../../../src/infrastructure';
+import { queueManager, workerManager, emailService } from '../../../src/infrastructure';
 
 vi.mock('../../../src/infrastructure', async (importOriginal) => {
   const actual = await importOriginal<Record<string, unknown>>();
@@ -22,6 +22,12 @@ vi.mock('../../../src/infrastructure', async (importOriginal) => {
     },
     workerManager: {
       registerWorker: vi.fn(),
+    },
+    emailService: {
+      sendEmail: vi.fn().mockResolvedValue({
+        messageId: 'msg_dispatched_test',
+        previewUrl: false,
+      }),
     },
   };
 });
@@ -46,8 +52,14 @@ describe('EmailJob', () => {
       const result = await processEmailJob(mockJob as never);
 
       expect(result).toBeDefined();
-      expect(result.messageId).toBe('msg_job_welcome_1');
+      expect(result.messageId).toBe('msg_dispatched_test');
       expect(result.sentAt).toBeDefined();
+      expect(emailService.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'user@example.com',
+          subject: 'Welcome to Our Platform!',
+        }),
+      );
     });
 
     it('should process send-password-reset email job successfully', async () => {
@@ -64,8 +76,14 @@ describe('EmailJob', () => {
       const result = await processEmailJob(mockJob as never);
 
       expect(result).toBeDefined();
-      expect(result.messageId).toBe('msg_job_reset_2');
+      expect(result.messageId).toBe('msg_dispatched_test');
       expect(result.sentAt).toBeDefined();
+      expect(emailService.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'user@example.com',
+          subject: 'Reset Your Password',
+        }),
+      );
     });
 
     it('should process send-generic email job successfully', async () => {
@@ -82,14 +100,19 @@ describe('EmailJob', () => {
       const result = await processEmailJob(mockJob as never);
 
       expect(result).toBeDefined();
-      expect(result.messageId).toBe('msg_job_generic_3');
+      expect(result.messageId).toBe('msg_dispatched_test');
       expect(result.sentAt).toBeDefined();
+      expect(emailService.sendEmail).toHaveBeenCalledWith({
+        to: 'admin@example.com',
+        subject: 'Weekly Digest',
+        html: 'Here is your weekly summary...',
+      });
     });
 
-    it('should handle fallback messageId when job id is undefined', async () => {
+    it('should handle fallback messageId when job id is undefined for unhandled jobs', async () => {
       const mockJob = {
         id: undefined,
-        name: EMAIL_JOB_NAMES.SEND_WELCOME,
+        name: 'unknown-job-type',
         data: {
           to: 'user@example.com',
           name: 'Jane',

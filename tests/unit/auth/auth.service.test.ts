@@ -6,6 +6,7 @@ import { usersService, UserModel, IUser } from '../../../src/modules/users';
 import { JwtUtil, UnauthorizedError } from '../../../src/core';
 
 vi.mock('../../../src/jobs', () => ({
+  enqueueWelcomeEmail: vi.fn().mockResolvedValue({ id: 'job_welcome' }),
   enqueuePasswordResetEmail: vi.fn().mockResolvedValue({ id: 'job_1' }),
 }));
 

@@ -4,6 +4,7 @@ import {
   workerManager,
   renderWelcomeEmail,
   renderPasswordResetEmail,
+  emailService,
 } from '../infrastructure';
 import { logger } from '../config';
 
@@ -45,13 +46,15 @@ export interface EmailJobResult {
 }
 
 /**
- * BullMQ processor function handling asynchronous email dispatches with compiled HTML templates.
+ * BullMQ processor function handling asynchronous email dispatches with compiled HTML templates and SMTP transport.
  */
 export async function processEmailJob(
   job: Job<EmailJobData, EmailJobResult, string>,
 ): Promise<EmailJobResult> {
   const { name, data, id } = job;
   logger.info({ jobId: id, jobName: name, to: data.to }, 'Processing background email job');
+
+  let resultMessageId = `msg_${id ?? Date.now()}`;
 
   switch (name) {
     case EMAIL_JOB_NAMES.SEND_WELCOME: {
@@ -60,10 +63,12 @@ export async function processEmailJob(
         name: welcomeData.name,
         loginUrl: welcomeData.loginUrl,
       });
-      logger.info(
-        { to: welcomeData.to, userId: welcomeData.userId, htmlBytes: html.length },
-        'Compiled and dispatched welcome HTML email',
-      );
+      const result = await emailService.sendEmail({
+        to: welcomeData.to,
+        subject: 'Welcome to Our Platform!',
+        html,
+      });
+      resultMessageId = result.messageId;
       break;
     }
     case EMAIL_JOB_NAMES.SEND_PASSWORD_RESET: {
@@ -73,15 +78,22 @@ export async function processEmailJob(
         expiresInMinutes: resetData.expiresInMinutes,
         resetUrl: resetData.resetUrl,
       });
-      logger.info(
-        { to: resetData.to, htmlBytes: html.length },
-        'Compiled and dispatched password reset HTML email',
-      );
+      const result = await emailService.sendEmail({
+        to: resetData.to,
+        subject: 'Reset Your Password',
+        html,
+      });
+      resultMessageId = result.messageId;
       break;
     }
     case EMAIL_JOB_NAMES.SEND_GENERIC: {
       const genericData = data as GenericEmailJobData;
-      logger.info({ to: genericData.to, subject: genericData.subject }, 'Dispatched generic email');
+      const result = await emailService.sendEmail({
+        to: genericData.to,
+        subject: genericData.subject,
+        html: genericData.content,
+      });
+      resultMessageId = result.messageId;
       break;
     }
     default: {
@@ -91,7 +103,7 @@ export async function processEmailJob(
   }
 
   return {
-    messageId: `msg_${id ?? Date.now()}`,
+    messageId: resultMessageId,
     sentAt: new Date().toISOString(),
   };
 }

@@ -585,6 +585,37 @@ const resetHtml = renderPasswordResetEmail({
 });
 ```
 
+#### Email Provider Service & SMTP Dispatcher (`src/infrastructure/email/email.service.ts`)
+
+The kit integrates Nodemailer with an automatic environment-aware transport:
+
+- **Production / Staging**: Connects to your configured SMTP server (Gmail, SendGrid, Amazon SES, Mailgun, Postmark, etc.) when `SMTP_HOST` and `SMTP_USER` are configured in `.env`.
+- **Local Development & Testing**: Automatically falls back to a non-blocking `jsonTransport` if SMTP credentials are not configured. Emails are captured and logged with mock message IDs, preventing development blockers and test timeouts.
+
+```typescript
+import { emailService } from '../infrastructure';
+
+// Direct email dispatch (or automatically via BullMQ email workers):
+const result = await emailService.sendEmail({
+  to: 'customer@example.com',
+  subject: 'Welcome to Our Service',
+  html: '<h1>Welcome!</h1><p>Thank you for signing up.</p>',
+});
+
+console.log('Dispatched message ID:', result.messageId);
+```
+
+##### SMTP Environment Variables
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_smtp_user@example.com
+SMTP_PASS=your_smtp_password
+SMTP_SECURE=false
+EMAIL_FROM="MyApp Support <support@myapp.com>"
+```
+
 ---
 
 ### 3.7 Step-by-Step Tutorial: How to Add a New Domain Module

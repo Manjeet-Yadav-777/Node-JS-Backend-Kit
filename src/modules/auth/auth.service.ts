@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { usersService, UserModel, IUser, RegisterUserDto, LoginUserDto } from '../users';
 import { JwtUtil, UnauthorizedError, BadRequestError } from '../../core';
-import { enqueuePasswordResetEmail } from '../../jobs';
+import { enqueueWelcomeEmail, enqueuePasswordResetEmail } from '../../jobs';
 
 const REFRESH_TOKEN_SALT_ROUNDS = 10;
 const PASSWORD_SALT_ROUNDS = 10;
@@ -36,6 +36,12 @@ export class AuthService {
 
     const hashedRefreshToken = await bcrypt.hash(refreshToken, REFRESH_TOKEN_SALT_ROUNDS);
     await UserModel.updateOne({ _id: user._id }, { $set: { refreshToken: hashedRefreshToken } });
+
+    await enqueueWelcomeEmail({
+      to: user.email,
+      name: user.name,
+      userId: (user._id as Types.ObjectId).toHexString(),
+    });
 
     return {
       user,

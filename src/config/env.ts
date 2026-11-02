@@ -23,6 +23,13 @@ const envSchema = z.object({
     .default('super_secret_refresh_token_key_change_in_production_min32chars'),
   JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  EMAIL_FROM: z.string().default('Node Backend Kit <noreply@example.com>'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
