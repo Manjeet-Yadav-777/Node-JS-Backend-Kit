@@ -824,6 +824,54 @@ await localStorageAdapter.upload({
 });
 ```
 
+#### PDF Generation & Streaming (`src/infrastructure/storage/pdf.generator.ts`)
+
+Powered by `pdfkit`, the `pdfGenerator` utility renders programmatic vector PDF documents for invoices, receipts, and reports, supporting both in-memory buffering and direct HTTP response streaming:
+
+```typescript
+import { pdfGenerator, localStorageAdapter } from '../infrastructure';
+import { Router } from 'express';
+
+const router = Router();
+
+// 1. Generate PDF as Buffer (e.g. for S3 upload or email attachment):
+const pdfBuffer = await pdfGenerator.generatePdf({
+  title: 'Invoice #1001',
+  subtitle: 'Tax Invoice & Receipt',
+  metadata: {
+    'Invoice Number': 'INV-1001',
+    Date: '2026-11-02',
+    Customer: 'ACME Corp',
+  },
+  items: [
+    { description: 'Cloud Infrastructure', quantity: 1, unitPrice: 120.0, total: 120.0 },
+    { description: 'Priority Support', quantity: 2, unitPrice: 40.0, total: 80.0 },
+  ],
+  notes: 'Payment terms: Due within 30 days.',
+});
+
+// Save to storage:
+await localStorageAdapter.upload({
+  originalName: 'invoice-1001.pdf',
+  mimeType: 'application/pdf',
+  size: pdfBuffer.length,
+  buffer: pdfBuffer,
+});
+
+// 2. Stream PDF directly to client response (zero-memory streaming):
+router.get('/invoices/:id/download', (req, res) => {
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'attachment; filename="invoice.pdf"');
+
+  const stream = pdfGenerator.createPdfStream({
+    title: `Invoice #${req.params.id}`,
+    items: [{ description: 'Subscription Plan', quantity: 1, unitPrice: 29.0, total: 29.0 }],
+  });
+
+  stream.pipe(res);
+});
+```
+
 ---
 
 ### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module

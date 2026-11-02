@@ -318,8 +318,8 @@ backend/
 - [x] Image resizing
 - [x] Image compression
 - [x] Thumbnail generation
-- [ ] PDF generation
-- [ ] PDF download and streaming
+- [x] PDF generation
+- [x] PDF download and streaming
 - [x] Signed URLs
 - [ ] File metadata management
 - [ ] Orphaned file cleanup
