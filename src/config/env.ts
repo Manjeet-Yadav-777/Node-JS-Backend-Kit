@@ -12,6 +12,12 @@ const envSchema = z.object({
   MONGODB_URI: z.string().default('mongodb://localhost:27017/main_db'),
   REDIS_URL: z.string().optional(),
   KAFKA_BROKERS: z.string().optional(),
+  KAFKA_CLIENT_ID: z.string().default('backend-kit-app'),
+  KAFKA_GROUP_ID: z.string().default('backend-kit-group'),
+  KAFKA_SSL: z.coerce.boolean().default(false),
+  KAFKA_SASL_USERNAME: z.string().optional(),
+  KAFKA_SASL_PASSWORD: z.string().optional(),
+  KAFKA_SASL_MECHANISM: z.enum(['plain', 'scram-sha-256', 'scram-sha-512']).default('plain'),
 
   JWT_ACCESS_SECRET: z
     .string()
