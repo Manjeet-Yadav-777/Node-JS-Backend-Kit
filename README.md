@@ -788,6 +788,42 @@ AWS_S3_BUCKET=my-app-uploads
 # AWS_S3_FORCE_PATH_STYLE=true
 ```
 
+#### Image Processing Pipeline (`src/infrastructure/storage/image.processor.ts`)
+
+Powered by `sharp`, the `imageProcessor` utility handles fast in-memory image transformation before persisting to local or S3 storage:
+
+```typescript
+import { imageProcessor, localStorageAdapter } from '../infrastructure';
+
+// 1. Inspect image dimensions and metadata:
+const meta = await imageProcessor.getMetadata(rawBuffer);
+console.log(`Image size: ${meta.width}x${meta.height}, format: ${meta.format}`);
+
+// 2. Resize to exact dimensions (aspect ratio preserved with 'cover' fit):
+const banner = await imageProcessor.resize(rawBuffer, {
+  width: 1200,
+  height: 630,
+  fit: 'cover',
+});
+
+// 3. Compress and convert to modern WebP format:
+const optimized = await imageProcessor.compress(rawBuffer, {
+  format: 'webp',
+  quality: 80,
+});
+
+// 4. Generate avatar thumbnail (150x150 square):
+const thumbnail = await imageProcessor.generateThumbnail(rawBuffer, 150);
+
+// 5. Store processed thumbnail:
+await localStorageAdapter.upload({
+  originalName: 'avatar-thumb.webp',
+  mimeType: 'image/webp',
+  size: thumbnail.length,
+  buffer: thumbnail,
+});
+```
+
 ---
 
 ### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module

@@ -315,9 +315,9 @@ backend/
 - [x] File upload service
 - [x] File validation and size limits
 - [ ] Secure file access
-- [ ] Image resizing
-- [ ] Image compression
-- [ ] Thumbnail generation
+- [x] Image resizing
+- [x] Image compression
+- [x] Thumbnail generation
 - [ ] PDF generation
 - [ ] PDF download and streaming
 - [x] Signed URLs
