@@ -266,6 +266,20 @@ export class ProfileController {
 }
 ```
 
+#### Password Reset Flow (Asynchronous Background Email)
+
+1. **Request Password Reset Link (`POST /api/v1/auth/forgot-password`)**:
+   - Request body: `{ "email": "user@example.com" }`.
+   - Generates a cryptographically secure 32-byte unguessable token, stores its SHA-256 hash in MongoDB with a 15-minute expiration.
+   - Dispatches an asynchronous `send-password-reset` job to the BullMQ background queue without blocking the HTTP response.
+   - Always returns a generic success message to prevent user enumeration attacks.
+
+2. **Reset Password with Token (`POST /api/v1/auth/reset-password`)**:
+   - Request body: `{ "token": "<token_from_email>", "password": "NewSecurePassword123" }`.
+   - Validates token against SHA-256 hash and checks expiration.
+   - Re-hashes new password with bcrypt (10 salt rounds).
+   - Clears existing reset token and invalidates active refresh tokens to force re-authentication.
+
 ---
 
 ### 3.4 Multi-Tenancy Architecture (B2B SaaS Ready)

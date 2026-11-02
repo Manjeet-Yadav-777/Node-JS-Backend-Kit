@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
+import { ForgotPasswordDto, ResetPasswordDto } from './auth.validation';
 import { usersService, RegisterUserDto, LoginUserDto } from '../users';
 import { ApiResponse, UnauthorizedError } from '../../core';
 import { env } from '../../config';
@@ -106,6 +107,41 @@ export class AuthController {
       res.clearCookie('refreshToken', { path: '/api/v1/auth' });
 
       ApiResponse.success(res, null, 'Logged out successfully', 200);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async forgotPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { email } = req.body as ForgotPasswordDto;
+      await authService.forgotPassword(email);
+
+      ApiResponse.success(
+        res,
+        null,
+        'If an account with that email exists, a password reset link has been sent.',
+        200,
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  public static async resetPassword(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { token, password } = req.body as ResetPasswordDto;
+      await authService.resetPassword(token, password);
+
+      ApiResponse.success(res, null, 'Password has been reset successfully', 200);
     } catch (error) {
       next(error);
     }

@@ -216,8 +216,8 @@ backend/
 - [x] JWT access token
 - [x] Refresh token rotation
 - [x] Token revocation
-- [ ] Forgot password
-- [ ] Reset password
+- [x] Forgot password
+- [x] Reset password
 - [ ] Email verification
 - [ ] OTP verification
 - [x] Role-based access control (RBAC)

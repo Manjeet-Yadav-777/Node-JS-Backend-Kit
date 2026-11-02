@@ -1,9 +1,13 @@
+import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { Types } from 'mongoose';
 import { usersService, UserModel, IUser, RegisterUserDto, LoginUserDto } from '../users';
-import { JwtUtil, UnauthorizedError } from '../../core';
+import { JwtUtil, UnauthorizedError, BadRequestError } from '../../core';
+import { enqueuePasswordResetEmail } from '../../jobs';
 
 const REFRESH_TOKEN_SALT_ROUNDS = 10;
+const PASSWORD_SALT_ROUNDS = 10;
+const RESET_TOKEN_EXPIRATION_MS = 15 * 60 * 1000; // 15 minutes
 
 export interface AuthResult {
   user: IUser;
@@ -109,6 +113,56 @@ export class AuthService {
 
   public async logout(userId: string): Promise<void> {
     await UserModel.updateOne({ _id: userId }, { $unset: { refreshToken: 1 } });
+  }
+
+  public async forgotPassword(email: string): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await UserModel.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return;
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRATION_MS);
+
+    await UserModel.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          passwordResetToken: hashedResetToken,
+          passwordResetExpires: expiresAt,
+        },
+      },
+    );
+
+    await enqueuePasswordResetEmail({
+      to: user.email,
+      resetToken,
+      expiresInMinutes: 15,
+    });
+  }
+
+  public async resetPassword(token: string, newPassword: string): Promise<void> {
+    const hashedToken = crypto.createHash('sha256').update(token.trim()).digest('hex');
+
+    const user = await UserModel.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: new Date() },
+    }).select('+password');
+
+    if (!user) {
+      throw new BadRequestError('Password reset token is invalid or has expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+    user.password = hashedPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.refreshToken = undefined;
+
+    await user.save();
   }
 }
 

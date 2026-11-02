@@ -96,4 +96,52 @@ describe('Auth Routes End-to-End Flow', () => {
       expect(response.headers['x-tenant-id']).toBe('tenant_profile_123');
     });
   });
+
+  describe('POST /api/v1/auth/forgot-password', () => {
+    it('should validate email and dispatch forgot-password request', async () => {
+      vi.spyOn(authService, 'forgotPassword').mockResolvedValue();
+
+      const response = await request(app).post('/api/v1/auth/forgot-password').send({
+        email: 'user@example.com',
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toContain('password reset link has been sent');
+    });
+
+    it('should reject invalid email format with 400', async () => {
+      const response = await request(app).post('/api/v1/auth/forgot-password').send({
+        email: 'not-an-email',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+  });
+
+  describe('POST /api/v1/auth/reset-password', () => {
+    it('should validate token & password and reset password successfully', async () => {
+      vi.spyOn(authService, 'resetPassword').mockResolvedValue();
+
+      const response = await request(app).post('/api/v1/auth/reset-password').send({
+        token: 'valid_reset_token',
+        password: 'NewPassword123',
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Password has been reset successfully');
+    });
+
+    it('should reject weak password with 400 validation error', async () => {
+      const response = await request(app).post('/api/v1/auth/reset-password').send({
+        token: 'valid_reset_token',
+        password: 'weak',
+      });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+  });
 });

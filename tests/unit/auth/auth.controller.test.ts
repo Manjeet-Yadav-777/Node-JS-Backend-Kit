@@ -136,6 +136,60 @@ describe('AuthController', () => {
     });
   });
 
+  describe('forgotPassword', () => {
+    it('should call authService.forgotPassword and return success response', async () => {
+      vi.spyOn(authService, 'forgotPassword').mockResolvedValue();
+      mockRequest.body = { email: 'user@example.com' };
+
+      await AuthController.forgotPassword(mockRequest, mockResponse, mockNext);
+
+      expect(authService.forgotPassword).toHaveBeenCalledWith('user@example.com');
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: 'If an account with that email exists, a password reset link has been sent.',
+        }),
+      );
+    });
+
+    it('should forward error to next if service throws', async () => {
+      vi.spyOn(authService, 'forgotPassword').mockRejectedValue(new Error('DB error'));
+      mockRequest.body = { email: 'user@example.com' };
+
+      await AuthController.forgotPassword(mockRequest, mockResponse, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should call authService.resetPassword and return success response', async () => {
+      vi.spyOn(authService, 'resetPassword').mockResolvedValue();
+      mockRequest.body = { token: 'valid_token', password: 'NewPassword123' };
+
+      await AuthController.resetPassword(mockRequest, mockResponse, mockNext);
+
+      expect(authService.resetPassword).toHaveBeenCalledWith('valid_token', 'NewPassword123');
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(jsonMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: 'Password has been reset successfully',
+        }),
+      );
+    });
+
+    it('should forward error to next if reset fails', async () => {
+      vi.spyOn(authService, 'resetPassword').mockRejectedValue(new Error('Invalid token'));
+      mockRequest.body = { token: 'bad_token', password: 'NewPassword123' };
+
+      await AuthController.resetPassword(mockRequest, mockResponse, mockNext);
+
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
+    });
+  });
+
   describe('getMe', () => {
     it('should return profile of currently authenticated user', async () => {
       const mockUser = { _id: new Types.ObjectId(), email: 'me@example.com' } as unknown as IUser;

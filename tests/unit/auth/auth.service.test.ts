@@ -5,6 +5,10 @@ import { authService } from '../../../src/modules/auth';
 import { usersService, UserModel, IUser } from '../../../src/modules/users';
 import { JwtUtil, UnauthorizedError } from '../../../src/core';
 
+vi.mock('../../../src/jobs', () => ({
+  enqueuePasswordResetEmail: vi.fn().mockResolvedValue({ id: 'job_1' }),
+}));
+
 describe('AuthService', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -137,6 +141,66 @@ describe('AuthService', () => {
         { _id: 'user_123' },
         { $unset: { refreshToken: 1 } },
       );
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('should silently return if user is not found', async () => {
+      vi.spyOn(UserModel, 'findOne').mockResolvedValue(null);
+
+      await expect(authService.forgotPassword('unknown@example.com')).resolves.not.toThrow();
+    });
+
+    it('should generate reset token and enqueue password reset email when user exists', async () => {
+      const mockUser = {
+        _id: new Types.ObjectId(),
+        email: 'user@example.com',
+      };
+
+      vi.spyOn(UserModel, 'findOne').mockResolvedValue(mockUser as never);
+      const updateOneSpy = vi.spyOn(UserModel, 'updateOne').mockResolvedValue({} as never);
+
+      await authService.forgotPassword('User@Example.com');
+
+      expect(updateOneSpy).toHaveBeenCalledWith(
+        { _id: mockUser._id },
+        {
+          $set: {
+            passwordResetToken: expect.any(String),
+            passwordResetExpires: expect.any(Date),
+          },
+        },
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('should throw BadRequestError when token is invalid or expired', async () => {
+      vi.spyOn(UserModel, 'findOne').mockReturnValue({
+        select: vi.fn().mockResolvedValue(null),
+      } as unknown as ReturnType<typeof UserModel.findOne>);
+
+      await expect(authService.resetPassword('invalid_token', 'NewPassword123')).rejects.toThrow(
+        'Password reset token is invalid or has expired',
+      );
+    });
+
+    it('should update password and invalidate reset token and refresh token on success', async () => {
+      const mockUser = {
+        _id: new Types.ObjectId(),
+        password: 'old_password',
+        save: vi.fn().mockResolvedValue(undefined),
+      };
+
+      vi.spyOn(UserModel, 'findOne').mockReturnValue({
+        select: vi.fn().mockResolvedValue(mockUser),
+      } as unknown as ReturnType<typeof UserModel.findOne>);
+      vi.spyOn(bcrypt, 'hash').mockResolvedValue('new_hashed_password' as never);
+
+      await authService.resetPassword('valid_token', 'NewPassword123');
+
+      expect(bcrypt.hash).toHaveBeenCalledWith('NewPassword123', 10);
+      expect(mockUser.save).toHaveBeenCalledTimes(1);
     });
   });
 });
