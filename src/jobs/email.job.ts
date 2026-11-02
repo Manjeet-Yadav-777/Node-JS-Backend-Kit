@@ -1,5 +1,10 @@
 import { Job, JobsOptions, Worker } from 'bullmq';
-import { queueManager, workerManager } from '../infrastructure';
+import {
+  queueManager,
+  workerManager,
+  renderWelcomeEmail,
+  renderPasswordResetEmail,
+} from '../infrastructure';
 import { logger } from '../config';
 
 export const EMAIL_QUEUE_NAME = 'email-queue' as const;
@@ -16,12 +21,14 @@ export interface WelcomeEmailJobData {
   to: string;
   name: string;
   userId: string;
+  loginUrl?: string;
 }
 
 export interface PasswordResetEmailJobData {
   to: string;
   resetToken: string;
   expiresInMinutes: number;
+  resetUrl?: string;
 }
 
 export interface GenericEmailJobData {
@@ -38,7 +45,7 @@ export interface EmailJobResult {
 }
 
 /**
- * BullMQ processor function handling asynchronous email dispatches.
+ * BullMQ processor function handling asynchronous email dispatches with compiled HTML templates.
  */
 export async function processEmailJob(
   job: Job<EmailJobData, EmailJobResult, string>,
@@ -49,17 +56,32 @@ export async function processEmailJob(
   switch (name) {
     case EMAIL_JOB_NAMES.SEND_WELCOME: {
       const welcomeData = data as WelcomeEmailJobData;
-      logger.info({ to: welcomeData.to, userId: welcomeData.userId }, 'Sending welcome email');
+      const html = renderWelcomeEmail({
+        name: welcomeData.name,
+        loginUrl: welcomeData.loginUrl,
+      });
+      logger.info(
+        { to: welcomeData.to, userId: welcomeData.userId, htmlBytes: html.length },
+        'Compiled and dispatched welcome HTML email',
+      );
       break;
     }
     case EMAIL_JOB_NAMES.SEND_PASSWORD_RESET: {
       const resetData = data as PasswordResetEmailJobData;
-      logger.info({ to: resetData.to }, 'Sending password reset email');
+      const html = renderPasswordResetEmail({
+        resetToken: resetData.resetToken,
+        expiresInMinutes: resetData.expiresInMinutes,
+        resetUrl: resetData.resetUrl,
+      });
+      logger.info(
+        { to: resetData.to, htmlBytes: html.length },
+        'Compiled and dispatched password reset HTML email',
+      );
       break;
     }
     case EMAIL_JOB_NAMES.SEND_GENERIC: {
       const genericData = data as GenericEmailJobData;
-      logger.info({ to: genericData.to, subject: genericData.subject }, 'Sending generic email');
+      logger.info({ to: genericData.to, subject: genericData.subject }, 'Dispatched generic email');
       break;
     }
     default: {

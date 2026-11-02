@@ -561,6 +561,30 @@ await enqueuePasswordResetEmail(
 startEmailWorker(5); // Concurrency of 5 workers
 ```
 
+#### Responsive HTML Email Templates (`src/infrastructure/email/templates/`)
+
+Email templates are decoupled from queue producers and HTTP controllers. Rather than bloating Redis memory with huge HTML strings, jobs transmit lightweight JSON parameters, and background workers compile the final responsive HTML on-demand:
+
+- **Welcome Email** (`renderWelcomeEmail`): Clean onboarding card with dynamic dashboard CTA button and support link.
+- **Password Reset Email** (`renderPasswordResetEmail`): Security-styled card featuring direct password reset CTA, raw token fallback, expiration warning (15m default), and fraud contact notice.
+
+```typescript
+import { renderWelcomeEmail, renderPasswordResetEmail } from '../infrastructure';
+
+// 1. Render Welcome Email HTML:
+const welcomeHtml = renderWelcomeEmail({
+  name: 'Alex',
+  loginUrl: 'https://myapp.com/login',
+});
+
+// 2. Render Password Reset Email HTML:
+const resetHtml = renderPasswordResetEmail({
+  resetToken: 'token_123',
+  resetUrl: 'https://myapp.com/reset-password?token=token_123',
+  expiresInMinutes: 15,
+});
+```
+
 ---
 
 ### 3.7 Step-by-Step Tutorial: How to Add a New Domain Module

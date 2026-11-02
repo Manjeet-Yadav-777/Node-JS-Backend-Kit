@@ -13,14 +13,18 @@ import {
 } from '../../../src/jobs';
 import { queueManager, workerManager } from '../../../src/infrastructure';
 
-vi.mock('../../../src/infrastructure', () => ({
-  queueManager: {
-    addJob: vi.fn(),
-  },
-  workerManager: {
-    registerWorker: vi.fn(),
-  },
-}));
+vi.mock('../../../src/infrastructure', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    queueManager: {
+      addJob: vi.fn(),
+    },
+    workerManager: {
+      registerWorker: vi.fn(),
+    },
+  };
+});
 
 describe('EmailJob', () => {
   beforeEach(() => {

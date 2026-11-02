@@ -296,9 +296,9 @@ backend/
 
 - [ ] Email provider abstraction
 - [ ] SMTP / Resend / SES adapters
-- [ ] Reusable email templates
-- [ ] Welcome email
-- [ ] Password reset email
+- [x] Reusable email templates
+- [x] Welcome email
+- [x] Password reset email
 - [ ] OTP email
 - [ ] SMS provider abstraction
 - [ ] Push notification service
