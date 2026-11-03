@@ -164,7 +164,7 @@ describe('KafkaConsumerManager', () => {
       message: {
         key: null,
         value: null,
-        headers: undefined,
+        headers: {},
         offset: '1',
         timestamp: '1700000000000',
         attributes: 0,
