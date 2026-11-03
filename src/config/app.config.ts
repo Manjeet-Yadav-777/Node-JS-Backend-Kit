@@ -1,7 +1,7 @@
 import { env } from './env';
 
 export const appConfig = {
-  name: 'BackendStarterKit',
+  name: 'Backend Starter Kit',
   env: env.NODE_ENV,
   port: env.PORT,
   apiPrefix: env.API_PREFIX,
