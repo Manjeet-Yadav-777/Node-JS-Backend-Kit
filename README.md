@@ -53,7 +53,10 @@ npm run dev
 # 5. Start background queue workers (Terminal 2 - Optional, when queue processing is needed)
 npm run worker:dev
 
-# 6. Run test suite
+# 6. Start Kafka event consumers (Terminal 3 - Optional, when event streaming is needed)
+npm run kafka:dev
+
+# 7. Run test suite
 npm run test
 ```
 
@@ -936,7 +939,60 @@ await localStorageAdapter.upload({
 
 ---
 
-### 3.8 Step-by-Step Tutorial: How to Add a New Domain Module
+### 3.8 Apache Kafka Event-Driven Architecture (`src/infrastructure/kafka/`)
+
+The starter kit includes a high-throughput event streaming architecture backed by KafkaJS, featuring automatic JSON serialization/deserialization, lazy connection pooling, batch publishing, consumer group isolation, and SASL/SSL enterprise authentication:
+
+#### Publishing Events (`kafkaProducer`)
+
+```typescript
+import { kafkaProducer } from '../infrastructure';
+
+// 1. Publish a single strongly typed domain event:
+await kafkaProducer.publish({
+  topic: 'user-events',
+  key: 'user_123',
+  value: {
+    eventType: 'USER_REGISTERED',
+    userId: 'user_123',
+    email: 'alex@example.com',
+    registeredAt: new Date().toISOString(),
+  },
+  headers: { source: 'api-gateway', version: 'v1' },
+});
+
+// 2. High-throughput batch publishing:
+await kafkaProducer.publishBatch('order-events', [
+  { key: 'ord_1', value: { orderId: 'ord_1', status: 'CONFIRMED' } },
+  { key: 'ord_2', value: { orderId: 'ord_2', status: 'CONFIRMED' } },
+]);
+```
+
+#### Consuming Events (`kafkaConsumerManager`)
+
+Consumers process event streams concurrently across consumer groups in dedicated background worker processes:
+
+```typescript
+import { kafkaConsumerManager } from '../infrastructure';
+
+// Register consumer group for 'user-events' and 'audit-events':
+await kafkaConsumerManager.registerConsumer({
+  groupId: 'notification-service-group',
+  topics: ['user-events', 'audit-events'],
+  fromBeginning: false,
+  handler: async (message) => {
+    const { topic, partition, offset, key, value } = message;
+    console.log(`Received event from ${topic} [p${partition}, offset ${offset}]:`, value);
+  },
+});
+```
+
+> [!NOTE]
+> **Independent Consumer Runner**: Start Kafka consumers in their own process using `npm run kafka:dev` (or in production: `npm run kafka:start`).
+
+---
+
+### 3.9 Step-by-Step Tutorial: How to Add a New Domain Module
 
 Follow these steps to create a new module (for example: `orders`):
 

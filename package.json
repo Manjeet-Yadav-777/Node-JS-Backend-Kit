@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "worker:dev": "tsx watch src/worker.ts",
+    "kafka:dev": "tsx watch src/consumer.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "worker:start": "node dist/worker.js",
+    "kafka:start": "node dist/consumer.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

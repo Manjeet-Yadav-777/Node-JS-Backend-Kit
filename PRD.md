@@ -263,19 +263,19 @@ backend/
 
 ### F. Kafka and Event-Driven Architecture
 
-- [ ] Kafka producer
-- [ ] Kafka consumer
-- [ ] Topic management
-- [ ] Event naming conventions
-- [ ] Event schema validation
-- [ ] Consumer group management
-- [ ] Retry strategy
-- [ ] Dead Letter Queue (DLQ)
-- [ ] Message ordering strategy
-- [ ] Idempotent consumers
-- [ ] Transactional outbox pattern
-- [ ] Event versioning
-- [ ] Graceful consumer shutdown
+- [x] Kafka producer
+- [x] Kafka consumer
+- [x] Topic management
+- [x] Event naming conventions
+- [x] Event schema validation
+- [x] Consumer group management
+- [x] Retry strategy
+- [x] Dead Letter Queue (DLQ)
+- [x] Message ordering strategy
+- [x] Idempotent consumers
+- [x] Transactional outbox pattern
+- [x] Event versioning
+- [x] Graceful consumer shutdown
 
 ### G. Background Jobs – BullMQ
 
