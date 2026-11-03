@@ -23,7 +23,10 @@ async function bootstrap(): Promise<void> {
 
   try {
     await connectRedis();
-    startEmailWorker();
+    if (process.env.ENABLE_EMBEDDED_WORKERS === 'true') {
+      startEmailWorker();
+      logger.info('Embedded BullMQ background workers started inside API server');
+    }
   } catch (error) {
     logger.warn({ error }, 'Redis connection initialization failed, continuing in degraded mode');
   }
