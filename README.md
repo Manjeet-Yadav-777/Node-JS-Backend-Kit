@@ -34,6 +34,8 @@ Request -> Middlewares -> Controller -> Service -> Model / Infrastructure -> Sta
 
 ### Setup & Run
 
+The starter kit adopts a production-grade decoupled process model (Twelve-Factor App). The HTTP API server and background queue workers run as independent processes:
+
 ```bash
 # 1. Clone repository
 git clone https://github.com/Manjeet-Yadav-777/Node-JS-Backend-Kit.git
@@ -45,14 +47,20 @@ npm install
 # 3. Configure environment variables
 cp .env.example .env
 
-# 4. Start local development server (with hot reload)
+# 4. Start HTTP API server (Terminal 1)
 npm run dev
 
-# 5. Run test suite
+# 5. Start background queue workers (Terminal 2 - Optional, when queue processing is needed)
+npm run worker:dev
+
+# 6. Run test suite
 npm run test
 ```
 
-The server starts at `http://localhost:5000` by default.
+The HTTP API server starts at `http://localhost:5000` by default.
+
+> [!TIP]
+> **Single-Process Dev Mode**: If you prefer running both the API server and queue workers together in a single terminal during local development, simply set `ENABLE_EMBEDDED_WORKERS=true` in your `.env` file. In production, always run them as separate deployments!
 
 ---
 
@@ -571,9 +579,15 @@ await enqueueOtpEmail({
   expiresInMinutes: 10,
 });
 
-// 4. Bootstrapping background email worker:
-startEmailWorker(5); // Concurrency of 5 workers
+// 4. Running the background worker process:
+// In development:
+// npm run worker:dev
+// In production:
+// npm run worker:start
 ```
+
+> [!NOTE]
+> **Independent Worker Process**: Background jobs are consumed by `src/worker.ts`. Running workers in a separate container/process ensures CPU-heavy queue jobs never starve or crash the HTTP API server.
 
 #### Responsive HTML Email Templates (`src/infrastructure/email/templates/`)
 
