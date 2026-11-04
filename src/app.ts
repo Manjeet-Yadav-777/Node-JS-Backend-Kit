@@ -24,8 +24,9 @@ export function createApp(): Application {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // Root health probe
+  // Root health and readiness probes
   app.use('/healthz', healthRoutes);
+  app.use('/health', healthRoutes);
 
   // API router v1
   const apiRouter = express.Router();
